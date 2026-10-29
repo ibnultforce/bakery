@@ -173,6 +173,10 @@ const FAST_MODEL = process.env.TWINSTACK_FAST_MODEL || '';
 // to CLAUDE_MODEL, `small` (wording, facts, removals, a one-property tweak) may go to FAST_MODEL
 // even without a design to follow. Unset or `standard`, pageModel's own rules decide.
 const TASK_SIZE = ['small', 'standard', 'complex'].includes(process.env.TWINSTACK_TASK_SIZE) ? process.env.TWINSTACK_TASK_SIZE : '';
+// How hard Claude thinks before writing a page or the header and footer. The Twinstack web app
+// passes `medium` for a site's first homepage and first header and footer, which would otherwise
+// spend minutes thinking; everything else stays at `high`.
+const EFFORT = ['low', 'medium', 'high'].includes(process.env.TWINSTACK_EFFORT) ? process.env.TWINSTACK_EFFORT : 'high';
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
 /* ------------------------------------------------------------------ queue */
@@ -1023,7 +1027,10 @@ function standIns(uploads, globals, remote = new Map()) {
  */
 async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWanted = { header: false, footer: false }) {
   const { file, html } = readHtmlSource(source);
-  const page = cleanHtml(html, { keepStyles: true, prefix: IMPORT_PREFIX });
+  let page = cleanHtml(html, { keepStyles: true, prefix: IMPORT_PREFIX });
+  // A page whose own header or footer isn't the one the site copied keeps its own (see ownChrome).
+  const own = chromeWanted.header || chromeWanted.footer ? null : ownChrome(page);
+  if (own) page = cleanHtml(html, { keepStyles: true, prefix: IMPORT_PREFIX, keepChrome: true });
   if (!page.text && !/<(img|svg)\b/i.test(page.html)) throw new Error(`${file} has no content left once its header and footer are removed`);
   // Where the page was published: its relative images, scripts and stylesheets are still there.
   const base = pageBaseUrl(html);
@@ -1089,12 +1096,19 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
   }
   const allSheets = [...unmatched, ...sheets];
   const reveal = detectReveal(allSheets, page.classes);
+  // Classes scripts switch on later. One the old <html> or <body> also had must still match the
+  // element inside it's put on, not only the wrapper.
+  const switchedClasses = scriptClasses(scripts.sources.map((s) => s.code));
+  const contentClasses = new Set([...page.classes, ...[...switchedClasses].filter((c) => page.rootClasses.has(c))]);
   const scoped = scopeCss(allSheets, {
-    scope: `.${IMPORT_SCOPE}`, prefix: IMPORT_PREFIX, classes: page.classes, ids: page.ids,
+    scope: `.${IMPORT_SCOPE}`, prefix: IMPORT_PREFIX, classes: contentClasses, ids: page.ids,
     rootClasses: page.rootClasses, rootIds: page.rootIds, reveal,
     hints: presentationalHints(body, `.${IMPORT_SCOPE}`, bodyAttributes(html)),
-    // Scripts may add classes later, so rules for classes not in the markup stay (bar the removed parts').
-    scripted: scripts.entries.length > 0, dropClasses: page.removedClasses, dropIds: page.removedIds,
+    // Scripts may add classes later, so rules for classes not in the markup stay (bar the removed
+    // parts', unless a script switches the class on: then the removed header used it too).
+    scripted: scripts.entries.length > 0,
+    dropClasses: [...page.removedClasses].filter((c) => !switchedClasses.has(c)),
+    dropIds: page.removedIds,
   });
   // Icons drawn from a sprite outside the kept content (<use href="#i-arrow">) need it with them.
   const sprite = svgDefinitions(html, body, IMPORT_PREFIX);
@@ -1104,6 +1118,7 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
   if (!scoped.rules) warnings.push("no CSS rules apply to this page's content, so it will show with browser default styles");
   if (scoped.css.length > MAX_IMPORTED_CSS) throw new Error(`the page's CSS is over ${MAX_IMPORTED_CSS / 1024} KB even after unused rules are removed`);
   if (page.removed.length) warnings.push(`removed from the HTML: ${page.removed.join(', ')}`);
+  if (own) warnings.push(`kept the page as it was, without the site's header and footer: its ${own} doesn't match the ones the site copied from ${ownChromeSource() ?? 'another page'}`);
 
   // The page's own header and footer, copied as the site's (--with-header / --with-footer).
   const chrome = chromeWanted.header || chromeWanted.footer
@@ -1114,7 +1129,10 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
   // The old <html>/<body> classes now belong to the wrapper, so their rules still apply.
   const wrapperClass = [IMPORT_SCOPE, ...[...page.rootClasses].map((c) => IMPORT_PREFIX + c)].join(' ');
   // The page the copied header and footer came from runs their scripts itself (see buildChrome).
-  const chromeSource = chrome?.id ? ` data-chrome-source="${chrome.id}"` : '';
+  // So does a page that had the same header: its own scripts open the same menu, and running the
+  // copied ones too would bind every button twice (a tap would open the menu and close it again).
+  const sharedId = own || chrome?.id ? null : sharedChromeDrivenBy(scripts);
+  const chromeSource = chrome?.id || sharedId ? ` data-chrome-source="${chrome?.id || sharedId}"` : '';
   return {
     file,
     html,
@@ -1132,6 +1150,8 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
     body: `<div class="${wrapperClass}"${chromeSource}${revealAttributes(reveal, html)}>\n${asRawBlock(body)}\n</div>\n`,
     // The copied header and footer: { id, files, header, footer, css } or null.
     chrome,
+    // The page keeps its own header and footer (frontmatter ownChrome, which base.html reads).
+    ownChrome: Boolean(own),
     reveal,
     fonts: [...new Set(fonts)],
     stylesheet: { file: importedStylesheet(relFile), content: `/* Imported with ${path.posix.basename(file)} by scripts/edit-page.js --keep-styles. Scoped to .${IMPORT_SCOPE}; regenerate it by converting again. */\n${scoped.css}` },
@@ -1163,6 +1183,103 @@ function pageUrlOf(relFile) {
 }
 // Scripts a copied header never needs on every page: analytics and ad tags.
 const ANALYTICS_SCRIPT = /googletagmanager|google-analytics|gtag\/js|connect\.facebook|hotjar|clarity\.ms|segment\.(com|io)|plausible|matomo|doubleclick/i;
+
+/** What a visitor reads in a piece of HTML: no tags, scripts, styles, drawings or template tags. */
+function readableText(html) {
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  return visibleText(
+    html
+      .replace(/<(script|style|svg|template|noscript)\b[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/\{\{[\s\S]*?\}\}/g, ' '),
+  )
+    // The copy may write a character as an entity where the original didn't, or the other way round.
+    .replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (whole, dec, hex, name) =>
+      dec ? String.fromCodePoint(Number(dec)) : hex ? String.fromCodePoint(parseInt(hex, 16)) : (named[name.toLowerCase()] ?? whole))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** A fingerprint of a header's or footer's markup (cleanHtml's chrome part), its scripts and styles and spacing aside. */
+function chromeKey(html) {
+  const markup = html.replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '').replace(/\s+/g, ' ').trim();
+  return createHash('sha1').update(markup).digest('hex').slice(0, 16);
+}
+
+/** The site's header and footer partials when they were copied from a page (--with-header), else null. */
+function copiedChrome() {
+  const read = (rel) => (fs.existsSync(path.join(ROOT, rel)) ? fs.readFileSync(path.join(ROOT, rel), 'utf8') : '');
+  const header = read(HEADER_FILE);
+  const footer = read(FOOTER_FILE);
+  if (!header.includes(COPIED_MARK) && !footer.includes(COPIED_MARK)) return null;
+  return { header: header.includes(COPIED_MARK) ? header : null, footer: footer.includes(COPIED_MARK) ? footer : null };
+}
+
+/** The page the site's copied header and footer came from (data-chrome-from), or null. */
+function ownChromeSource() {
+  const copied = copiedChrome();
+  return /\bdata-chrome-from="([^"]*)"/.exec(copied?.header ?? copied?.footer ?? '')?.[1] ?? null;
+}
+
+/**
+ * The copied header's id (data-chrome-id) when this page's own kept scripts drive its elements (they
+ * name one of its ids), else null: the page then runs them itself, as the page it was copied from does.
+ */
+function sharedChromeDrivenBy(scripts) {
+  const copied = copiedChrome();
+  if (!copied) return null;
+  const markup = `${copied.header ?? ''}\n${copied.footer ?? ''}`;
+  const chromeId = /\bdata-chrome-id="([^"]+)"/.exec(markup)?.[1];
+  if (!chromeId) return null;
+  const visible = markup.replace(/<template\b[\s\S]*?<\/template\s*>/gi, '');
+  const ids = [...visible.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]).filter((id) => id.length >= 3);
+  const code = scripts.sources.map((s) => s.code ?? '').join('\n');
+  return ids.some((id) => new RegExp(`["'#]${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'\\s.:\\[)]`).test(code)) ? chromeId : null;
+}
+
+/**
+ * When the site's header and footer were copied from one page, a page whose own header or footer
+ * reads differently (a product's own menu and "Install" button) keeps its own: showing the site's
+ * there would change how it looks. Compared by the text a visitor reads, so a highlighted menu item
+ * or a different id doesn't count. Returns "header", "footer", "header and footer" or null.
+ */
+function ownChrome(page) {
+  const copied = copiedChrome();
+  if (!copied) return null;
+  const differs = (place) => {
+    const mine = readableText(page.chrome[place].html);
+    if (!mine || copied[place] === null) return false;
+    // The markup the site's copy was made from: any difference (another menu, its styling, which
+    // item is marked current) shows, so only the very same header is the site's.
+    const key = /\bdata-chrome-key="([^"]+)"/.exec(copied[place])?.[1];
+    return key ? chromeKey(page.chrome[place].html) !== key : mine !== readableText(copied[place]);
+  };
+  const parts = ['header', 'footer'].filter(differs);
+  // A page with neither (a bare "not found" page, a landing page) showed none.
+  if (!parts.length && !readableText(page.chrome.header.html) && !readableText(page.chrome.footer.html)) return 'lack of a header and footer';
+  return parts.length ? parts.join(' and ') : null;
+}
+
+/**
+ * Class names scripts may add or remove later: the string arguments of classList.add/remove/
+ * toggle/replace and the strings assigned to className or set as "class". Their CSS rules must
+ * stay even when a removed part (or, for the header and footer, the page) also uses the class:
+ * a bar that goes full width on scroll adds `w-full`, which the page's content has too.
+ */
+function scriptClasses(codes) {
+  const found = new Set();
+  // A class name never holds a quote or a line break, so the shortest quoted run is enough.
+  const strings = (text) => [...text.matchAll(/"([^"\r\n]*)"|'([^'\r\n]*)'|`([^`]*)`/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+  for (const code of codes) {
+    if (!code) continue;
+    const calls = [
+      ...code.matchAll(/\.classList\s*\.\s*(?:add|remove|toggle|replace)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g),
+      ...code.matchAll(/\.className\s*\+?=\s*([^;\n]+)/g),
+      ...code.matchAll(/setAttribute\s*\(\s*["']class["']\s*,([^)]*)\)/g),
+    ];
+    for (const [, args] of calls) for (const s of strings(args)) for (const name of s.split(/\s+/)) if (/^-?[_a-zA-Z][\w\-:[\]%./#()!,]*$/.test(name)) found.add(name);
+  }
+  return found;
+}
 
 /**
  * The page's own header and footer, copied as the site's: the HTML cleanHtml
@@ -1237,10 +1354,16 @@ function buildChrome({ html, file, page, sheets, scripts, base, fonts, wanted, p
   });
 
   const pageOnly = (all, kept) => [...all].filter((x) => !kept.has(x));
+  // Classes the kept scripts switch on later (the bar's scrolled state) keep their rules, even
+  // when the page's content uses them too.
+  const switched = scriptClasses(files.map((f) => f.content));
+  // One the old <html> or <body> also had (<html class="w-full">) must still match the element
+  // the script puts it on, not only the wrapper.
+  const inside = new Set([...classes, ...[...switched].filter((c) => page.rootClasses.has(c))]);
   const scoped = scopeCss(sheets, {
-    scope: `.${CHROME_SCOPE}`, prefix: IMPORT_PREFIX, classes, ids, rootClasses: page.rootClasses, rootIds: page.rootIds,
+    scope: `.${CHROME_SCOPE}`, prefix: IMPORT_PREFIX, classes: inside, ids, rootClasses: page.rootClasses, rootIds: page.rootIds,
     hints: presentationalHints(Object.values(markup).join('\n'), `.${CHROME_SCOPE}`),
-    scripted: tags.length > 0, dropClasses: pageOnly(page.classes, classes), dropIds: pageOnly(page.ids, ids), chrome: true,
+    scripted: tags.length > 0, dropClasses: pageOnly(page.classes, new Set([...classes, ...switched])), dropIds: pageOnly(page.ids, ids), chrome: true,
   });
   if (scoped.css.length > MAX_IMPORTED_CSS) throw new Error(`the header and footer's CSS is over ${MAX_IMPORTED_CSS / 1024} KB even after unused rules are removed`);
   for (const place of Object.keys(markup)) markup[place] = scaleInlineRem(markup[place], scoped.remFactor);
@@ -1267,7 +1390,7 @@ function buildChrome({ html, file, page, sheets, scripts, base, fonts, wanted, p
   const helper = `(function(){var me=document.currentScript,home=me.previousElementSibling,w=home.previousElementSibling,spacer=null;if(w&&w.hasAttribute('data-chrome-spacer')){spacer=w;w=w.previousElementSibling;}var source=function(){return document.querySelector('.imported-page[data-chrome-source="${id}"]');};function size(){if(!spacer||window.scrollY>40)return;var b=0;Array.prototype.forEach.call(w.querySelectorAll('*'),function(e){var p=getComputedStyle(e).position;if(p!=='fixed'&&!(p==='absolute'&&(e.offsetParent===document.body||e.offsetParent===null)))return;var r=e.getBoundingClientRect();if(!r.height||r.left>=innerWidth||r.right<=0||r.top>120)return;if(r.bottom>b)b=r.bottom;});spacer.style.height=Math.ceil(b)+'px';}size();addEventListener('load',size);addEventListener('resize',size);document.addEventListener('DOMContentLoaded',function(){if(source())return;Array.prototype.forEach.call(w.querySelectorAll('a[href^="#"]'),function(a){var id=a.getAttribute('href').slice(1);if(id&&!document.querySelector('[id="'+id.replace(/["\\\\]/g,'\\\\$&')+'"]'))a.setAttribute('href',home.getAttribute('href')+'#'+id);});});})();`;
   const partial = (place, withLinks, withScripts) => [
     `<!-- Copied from ${from.replace(/--/g, '-')} by scripts/edit-page.js --with-${place}: fixed HTML, so the menu settings don't change it. Convert again, or restore the standard ${place}, to change it. -->`,
-    `<div class="${wrapperClass}" ${COPIED_MARK} data-chrome-id="${id}" data-chrome-from="${attr(from)}">`,
+    `<div class="${wrapperClass}" ${COPIED_MARK} data-chrome-id="${id}" data-chrome-from="${attr(from)}" data-chrome-key="${chromeKey(parts[place].html)}">`,
     ...(withLinks ? [links] : []),
     asRawBlock(markup[place]),
     '</div>',
@@ -1392,6 +1515,8 @@ function assembleStyledFile(reply, styled) {
   if (styled.fonts.length) lines.push('fonts:', ...styled.fonts.map((url) => `  - "${url.replace(/"/g, '%22')}"`));
   // The imported page brings its own call to action; the site's would be added after it.
   if (!lines.some((line) => /^hideCta\s*:/.test(line))) lines.push('hideCta: true');
+  // Its own header and footer are in the body, so base.html leaves the site's out.
+  if (styled.ownChrome) lines.push('ownChrome: true');
   // Its scripts, in order, which base.html loads with assets/js/imported-page.js before them.
   if (styled.scripts.length) {
     lines.push('scripts:');
@@ -1427,7 +1552,8 @@ async function testStyledPage(styled, raw) {
     problems.push("the site's markdown renderer changes the copied HTML, so the page wouldn't show as the original");
   }
   const decode = (s) => visibleText(s.replace(/&#123;/g, '{').replace(/&#125;/g, '}').replace(/^&#32;$/gm, ''));
-  const originalText = decode(cleanHtml(styled.html, { keepStyles: true, prefix: '' }).html);
+  // The same parts left out as in the copy: none of its own header and footer when it kept them.
+  const originalText = decode(cleanHtml(styled.html, { keepStyles: true, prefix: '', keepChrome: styled.ownChrome }).html);
   const copiedText = decode(rendered);
   if (originalText !== copiedText) problems.push("the copy's text differs from the original's");
   checks.push(problems.length ? 'pass 1, content: failed' : `pass 1, content: the site's renderer keeps the page as it is, with all ${originalText.length} characters of its text`);
@@ -1518,7 +1644,7 @@ function originalTestDocument(styled) {
   head = head.replace(/<head\b[^>]*>/i, (open) => `${open}${/name\s*=\s*["']?viewport/i.test(head) ? '' : '<meta name="viewport" content="width=device-width, initial-scale=1">'}${unmatched}`);
   const htmlTag = /<html\b[^>]*>/i.exec(source)?.[0] ?? '<html>';
   const bodyTag = /<body\b[^>]*>/i.exec(source)?.[0] ?? '<body>';
-  const cleaned = cleanHtml(styled.html, { keepStyles: true, prefix: '' });
+  const cleaned = cleanHtml(styled.html, { keepStyles: true, prefix: '', keepChrome: styled.ownChrome });
   // A copied header and footer are compared too: in the original they're around the content.
   const kept = [styled.chrome?.header && cleaned.chrome.header.html, cleaned.html, styled.chrome?.footer && cleaned.chrome.footer.html].filter(Boolean).join('\n');
   const content = rewriteImages(`${kept}\n${svgDefinitions(styled.html, kept)}`, (src) => siteImage(src, styled.base));
@@ -1749,7 +1875,7 @@ async function askClaude(buildPrompts, images, { cache = false, model = CLAUDE_M
   // The prompts describe which images are shown, so they're rebuilt for the retry.
   const call = (list) => {
     const { systemPrompt, userPrompt } = buildPrompts(list);
-    return requestClaude({ apiKey, model, systemPrompt, userContent: userContent(userPrompt, list), maxTokens: MAX_TOKENS, effort: 'high', cache });
+    return requestClaude({ apiKey, model, systemPrompt, userContent: userContent(userPrompt, list), maxTokens: MAX_TOKENS, effort: EFFORT, cache });
   };
   try {
     return { ...(await call(images)), images };
@@ -2471,7 +2597,7 @@ async function applyChrome(instruction) {
 
   // One request and the checks on its reply.
   const attempt = async (useModel) => {
-    const reply = await requestClaude({ apiKey, model: useModel, systemPrompt, userContent: userPrompt, maxTokens: MAX_TOKENS, effort: 'high' });
+    const reply = await requestClaude({ apiKey, model: useModel, systemPrompt, userContent: userPrompt, maxTokens: MAX_TOKENS, effort: EFFORT });
     if (reply.stopReason === 'refusal') return { reply, files: {}, problems: [], warnings: [] };
     const files = readChromeReply(reply.text);
     const { problems, warnings } = chromeChecks(files, { partialNames: partialNames() });

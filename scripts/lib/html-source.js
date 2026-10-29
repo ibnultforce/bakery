@@ -105,6 +105,9 @@ function attribute(attrs, name) {
   return m ? (m[2] ?? m[3] ?? m[4] ?? '') : null;
 }
 
+const COOKIE_CONTAINERS = new Set(['div', 'section', 'aside', 'dialog', 'form', 'header', 'footer']);
+const COOKIE_TOKEN = /^(?:[a-z]+[-_])?cookie(?:[-_]?(?:banner|notice|consent|bar|popup|modal|box|wrapper|container|law|policy-banner|prompt))?$/i;
+
 /**
  * Why an element is site chrome ("header", "navigation"…), or null to keep it.
  * `atEdge` is true above the page's main heading or below its last heading:
@@ -116,7 +119,9 @@ function chromeReason(name, attrs, inContent, atEdge) {
   const tokens = `${attribute(attrs, 'class') || ''} ${attribute(attrs, 'id') || ''}`.split(/\s+/).filter(Boolean);
 
   if (tokens.some((t) => /^breadcrumbs?$/i.test(t))) return 'breadcrumbs';
-  if (tokens.some((t) => /^cookie/i.test(t)) || role === 'alertdialog') return 'cookie banner';
+  // A container named like a banner. Not "cookies" or a heading: a privacy page's <h2 id="cookies">
+  // is its content.
+  if ((COOKIE_CONTAINERS.has(name) && tokens.some((t) => COOKIE_TOKEN.test(t))) || role === 'alertdialog') return 'cookie banner';
   if ((name === 'nav' || role === 'navigation') && atEdge && !inContent) return 'navigation';
   if (inContent) return null;
 
@@ -134,6 +139,11 @@ function chromeReason(name, attrs, inContent, atEdge) {
     return 'header';
   }
   return null;
+}
+
+/** No menu in it: no <nav> or navigation role, and at most 6 links (an author, a few calls to action). */
+function isTitleSection(part) {
+  return !/<nav\b|\brole\s*=\s*["']?navigation/i.test(part) && (part.match(/<a\b/gi) || []).length <= 6;
 }
 
 // What a removed part is, for keeping it as the site's own header or footer (cleanHtml's `chrome`):
@@ -170,6 +180,9 @@ function removeChrome(html, removed, collect = null) {
     if (!reason) continue;
     const end = elementEnd(html, rawName, m.index + whole.length);
     if (end < 0) continue; // unclosed: leave it to Claude rather than cut the rest of the page
+    // A <header> holding the page's <h1> and no menu is the page's own title section (a post's
+    // title, date and author on a page without <main>), not the site's header.
+    if (reason === 'header' && firstHeading > m.index && firstHeading < end && isTitleSection(html.slice(m.index, end))) continue;
     out += html.slice(last, m.index);
     if (collect && SITE_WIDE.has(reason)) {
       const after = reason === 'footer' || reason === 'cookie banner' || (contentStart >= 0 && m.index > contentStart);
@@ -269,7 +282,7 @@ const removedList = (removed) => Object.entries(removed).map(([what, n]) => (n >
  * Returns { title, description, html, removed: ["header", "navigation (3)"…], text },
  * plus { classes, ids } with keepStyles.
  */
-export function cleanHtml(source, { keepStyles = false, prefix = '' } = {}) {
+export function cleanHtml(source, { keepStyles = false, prefix = '', keepChrome = false } = {}) {
   const removed = {};
   const head = /<head\b[^>]*>([\s\S]*?)<\/head\s*>/i.exec(source)?.[1] ?? source;
   const title = decodeEntities(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i.exec(head)?.[1] ?? '');
@@ -283,11 +296,14 @@ export function cleanHtml(source, { keepStyles = false, prefix = '' } = {}) {
   // Every class and id of the whole page, before its header and footer go (see removedIds below).
   const whole = keepStyles ? styledTags(html, '') : null;
 
-  // Skip links jump past the old site's header; the site has its own.
-  html = html.replace(/<a\b[^>]*\bhref\s*=\s*["']#[^"']*["'][^>]*>\s*skip\b[\s\S]*?<\/a\s*>/gi, () => {
-    removed['skip link'] = (removed['skip link'] || 0) + 1;
-    return '';
-  });
+  // Skip links jump past the old site's header; the site has its own (unless the page keeps its
+  // own header: keepChrome).
+  if (!keepChrome) {
+    html = html.replace(/<a\b[^>]*\bhref\s*=\s*["']#[^"']*["'][^>]*>\s*skip\b[\s\S]*?<\/a\s*>/gi, () => {
+      removed['skip link'] = (removed['skip link'] || 0) + 1;
+      return '';
+    });
+  }
 
   // When <main> holds most of the page, everything around it is the site, not the page. A copy
   // with its styles keeps the rest too, bar the chrome removed below: what sits outside <main>
@@ -299,8 +315,10 @@ export function cleanHtml(source, { keepStyles = false, prefix = '' } = {}) {
     html = main;
   }
 
+  // keepChrome (a styled copy only): the page keeps its own header, footer and menus, because they
+  // aren't the site's (edit-page.js decides), so nothing is taken out.
   const chromeParts = [];
-  html = removeChrome(html, removed, keepStyles ? chromeParts : null);
+  if (!(keepStyles && keepChrome)) html = removeChrome(html, removed, keepStyles ? chromeParts : null);
 
   if (keepStyles) {
     const styled = styledTags(html.trim(), prefix);
@@ -430,10 +448,15 @@ export function linkedStylesheet(attrs) {
  * block and { href } for each linked stylesheet (see linkedStylesheet), each
  * with its `media` when it has one other than "all" (a print stylesheet must
  * stay print-only). A <noscript> fallback is left out (scripts run, so it
- * doesn't apply), and so is a second link to the same sheet.
+ * doesn't apply), and so is a second link to the same sheet. Scripts' text is
+ * left out first: a script that mentions "<style>" in a comment or string
+ * would otherwise start a block that swallows code and the real styles after it.
  */
 export function stylesheetsIn(source) {
-  const html = source.replace(/<!--[\s\S]*?-->/g, '').replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, '');
+  const html = source
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, '');
   const sheets = [];
   const seen = new Set();
   for (const m of html.matchAll(/<style\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/style\s*>|<link\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi)) {

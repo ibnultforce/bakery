@@ -585,6 +585,10 @@ to a cheaper `deepseek-*` model its proxy routes), and every use of it falls bac
   stays on `CLAUDE_MODEL`, and a `small` edit (wording, facts, removals, a one-property tweak) goes
   to `TWINSTACK_FAST_MODEL` even on a page with no design yet. Unset or `standard`, the rules below
   decide. The web app detects support by the literal `TWINSTACK_TASK_SIZE` in `edit-page.js`.
+- `TWINSTACK_EFFORT` (`low`/`medium`/`high`, default `high`) is the effort `edit-page.js` asks for
+  when it writes a page (`askClaude`) or the header and footer (`applyChrome`). The web app passes
+  `medium` for a site's first homepage and first header and footer (on Claude Opus), which at
+  `high` spent most of their minutes thinking. Conversions' reviews keep `high`.
 - `edit-page.js` (`chromeModel`): every `--chrome` request, whatever the site's design and
   `TWINSTACK_TASK_SIZE` (a site with no design yet and a complex direction included);
   `CLAUDE_MODEL` only takes over when its result errors, is declined or fails the checks.
