@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Iced cinnamon roll">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4d6"/><stop offset="1" stop-color="#e3bfa6"/></linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="320" rx="260" ry="200" fill="#fff" opacity=".7"/>
+  <ellipse cx="400" cy="320" rx="240" ry="182" fill="none" stroke="#e1c3ad" stroke-width="4"/>
+  <circle cx="400" cy="310" r="160" fill="#c98543"/>
+  <path d="M400 310 m0 -18 a18 18 0 1 1 -18 18 a40 40 0 0 1 58 -36 a62 62 0 1 1 -96 52 a86 86 0 0 1 128 -88 a110 110 0 1 1 -168 76 a134 134 0 0 1 186 -126" fill="none" stroke="#7a3f16" stroke-width="12" stroke-linecap="round"/>
+  <path d="M290 230 q40 30 20 70 q-10 30 30 40 q40 10 60 -20 q30 -30 60 0 q30 30 70 10 M300 380 q30 -20 60 10 q40 30 80 0" fill="none" stroke="#fffaf0" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+</svg>

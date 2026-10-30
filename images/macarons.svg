@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Stack of pastel macarons">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1efe2"/><stop offset="1" stop-color="#d9dcc1"/></linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="500" rx="250" ry="24" fill="#5a3825" opacity=".15"/>
+  <g id="m">
+    <!-- bottom row -->
+    <g transform="translate(260 430)"><ellipse rx="90" ry="26" cy="18" fill="#e8a598"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#fff4ea"/><ellipse rx="90" ry="30" cy="-14" fill="#f0b8ac"/></g>
+    <g transform="translate(540 430)"><ellipse rx="90" ry="26" cy="18" fill="#a9c08a"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#fff4ea"/><ellipse rx="90" ry="30" cy="-14" fill="#bcd09f"/></g>
+    <g transform="translate(400 360)"><ellipse rx="90" ry="26" cy="18" fill="#c7b2df"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#fff4ea"/><ellipse rx="90" ry="30" cy="-14" fill="#d6c4ea"/></g>
+    <g transform="translate(300 290)"><ellipse rx="90" ry="26" cy="18" fill="#f1cf7a"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#5a3825"/><ellipse rx="90" ry="30" cy="-14" fill="#f6dc96"/></g>
+    <g transform="translate(500 290)"><ellipse rx="90" ry="26" cy="18" fill="#9ccfd2"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#fff4ea"/><ellipse rx="90" ry="30" cy="-14" fill="#b4dde0"/></g>
+    <g transform="translate(400 210)"><ellipse rx="90" ry="26" cy="18" fill="#8a5a3a"/><rect x="-86" y="-6" width="172" height="18" rx="9" fill="#f3d9b5"/><ellipse rx="90" ry="30" cy="-14" fill="#a06d4a"/></g>
+  </g>
+  <g fill="#fff" opacity=".5"><ellipse cx="370" cy="190" rx="30" ry="8"/><ellipse cx="270" cy="270" rx="30" ry="8"/><ellipse cx="470" cy="270" rx="30" ry="8"/></g>
+</svg>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Fresh bread, croissants and pastries on a wooden board">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#fbe9cf"/>
+      <stop offset="1" stop-color="#e9c79a"/>
+    </radialGradient>
+    <linearGradient id="board" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a86c3c"/>
+      <stop offset="1" stop-color="#7b4a26"/>
+    </linearGradient>
+    <radialGradient id="loaf" cx="45%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#e8a858"/>
+      <stop offset=".6" stop-color="#c47a3a"/>
+      <stop offset="1" stop-color="#8a4f22"/>
+    </radialGradient>
+    <linearGradient id="crois" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2b860"/>
+      <stop offset="1" stop-color="#b8692a"/>
+    </linearGradient>
+    <linearGradient id="bag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eab26a"/>
+      <stop offset="1" stop-color="#a8622a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <g fill="#f6dcb5" opacity=".7">
+    <circle cx="140" cy="140" r="6"/><circle cx="1050" cy="110" r="8"/><circle cx="980" cy="230" r="4"/>
+    <circle cx="220" cy="260" r="4"/><circle cx="600" cy="90" r="5"/><circle cx="380" cy="160" r="3"/>
+  </g>
+  <!-- board -->
+  <ellipse cx="600" cy="760" rx="520" ry="70" fill="#5a3825" opacity=".25"/>
+  <rect x="110" y="600" width="980" height="150" rx="75" fill="url(#board)"/>
+  <rect x="110" y="600" width="980" height="30" rx="15" fill="#c28452" opacity=".6"/>
+  <path d="M200 680h300M620 700h360M260 720h200" stroke="#6a3d1d" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+  <!-- baguette -->
+  <g transform="rotate(-14 330 470)">
+    <rect x="70" y="420" width="520" height="110" rx="55" fill="url(#bag)"/>
+    <g fill="none" stroke="#fbe1b0" stroke-width="10" stroke-linecap="round">
+      <path d="M140 450q30 -18 60 0"/><path d="M240 450q30 -18 60 0"/><path d="M340 450q30 -18 60 0"/><path d="M440 450q30 -18 60 0"/>
+    </g>
+  </g>
+  <!-- sourdough boule -->
+  <g>
+    <ellipse cx="640" cy="560" rx="230" ry="160" fill="url(#loaf)"/>
+    <path d="M490 520q150 -120 300 0" fill="none" stroke="#fde7c0" stroke-width="16" stroke-linecap="round"/>
+    <path d="M520 590q120 -70 240 0" fill="none" stroke="#f4d6a2" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+    <g fill="#fff6e6" opacity=".55"><circle cx="560" cy="470" r="5"/><circle cx="700" cy="450" r="4"/><circle cx="760" cy="520" r="5"/><circle cx="600" cy="640" r="4"/></g>
+  </g>
+  <!-- croissant -->
+  <g transform="translate(860 520)">
+    <path d="M-150 60 Q-160 -40 -60 -70 Q0 -90 60 -70 Q160 -40 150 60 Q120 20 80 30 Q40 -10 0 -10 Q-40 -10 -80 30 Q-120 20 -150 60z" fill="url(#crois)"/>
+    <path d="M-60 -70 Q-70 0 -80 30M0 -88 Q0 -40 0 -10M60 -70 Q70 0 80 30" fill="none" stroke="#8a4a1a" stroke-width="5" opacity=".55"/>
+    <path d="M-40 -60 Q-30 -40 -20 -50M30 -60 Q40 -40 50 -50" fill="none" stroke="#fde0a8" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- muffins / rolls -->
+  <g transform="translate(300 640)">
+    <circle cx="0" cy="0" r="58" fill="#d58e47"/><circle cx="-14" cy="-16" r="20" fill="#eab06a" opacity=".7"/>
+    <path d="M-30 -10q30 -20 60 0" stroke="#fbe1b0" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(420 680)">
+    <circle cx="0" cy="0" r="46" fill="#c47a3a"/><circle cx="-10" cy="-14" r="16" fill="#e8a858" opacity=".7"/>
+  </g>
+  <!-- wheat -->
+  <g stroke="#b88a3f" stroke-width="4" fill="#e3b866">
+    <path d="M1060 640 L1000 300" fill="none"/>
+    <ellipse cx="1012" cy="330" rx="10" ry="22" transform="rotate(-30 1012 330)"/>
+    <ellipse cx="1000" cy="362" rx="10" ry="22" transform="rotate(30 1000 362)"/>
+    <ellipse cx="1026" cy="390" rx="10" ry="22" transform="rotate(-30 1026 390)"/>
+    <ellipse cx="1012" cy="420" rx="10" ry="22" transform="rotate(30 1012 420)"/>
+    <path d="M1100 650 L1080 360" fill="none"/>
+    <ellipse cx="1084" cy="390" rx="9" ry="20" transform="rotate(-25 1084 390)"/>
+    <ellipse cx="1074" cy="420" rx="9" ry="20" transform="rotate(25 1074 420)"/>
+    <ellipse cx="1092" cy="448" rx="9" ry="20" transform="rotate(-25 1092 448)"/>
+  </g>
+  <!-- steam -->
+  <g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".6">
+    <path d="M600 360q-20 -30 0 -60t0 -60"/><path d="M660 350q-20 -30 0 -60t0 -60"/><path d="M720 370q-20 -30 0 -60"/>
+  </g>
+</svg>

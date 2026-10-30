@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pastries &amp; Cakes — Golden Crumb Bakery</title>
+  <meta name="description" content="Laminated croissants, cinnamon swirls, macarons and custom celebration cakes from Golden Crumb Bakery.">
+  <link rel="icon" href="images/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="announce">🥖 Fresh sourdough out of the oven at 7am &amp; 12pm daily — pre-order before 6pm for next-day pickup</div>
+  <header class="site-header">
+    <nav class="container nav" aria-label="Main">
+      <a class="brand" href="index.html"><img src="images/logo.svg" alt=""><span>Golden Crumb</span></a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="products-breads.html">Breads</a></li>
+        <li><a href="products-pastries.html" aria-current="page">Pastries &amp; Cakes</a></li>
+        <li><a href="index.html#journal">Journal</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a class="cart-pill" href="contact.html#order">Order <span class="cart-count">0</span></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-banner">
+      <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a> / Pastries &amp; Cakes</div>
+        <span class="eyebrow">The pastry case</span>
+        <h1>Pastries &amp; Cakes</h1>
+        <p class="lead">Flaky, buttery, sweet and occasionally spectacular. Laminated over three days and finished by hand each morning.</p>
+      </div>
+    </section>
+
+    <!-- Featured product -->
+    <section class="section">
+      <div class="container">
+        <div class="showcase-feature reveal">
+          <div>
+            <span class="tag">Customer favourite</span> <span class="tag tag--rose">Contains dairy</span>
+            <h2>The Butter Croissant</h2>
+            <p>Our pastry chef Tomás folds French-style cultured butter into a lightly sweet dough over three days, building 27 whisper-thin layers. The result shatters at first bite and reveals a honeycomb interior.</p>
+            <div class="spec-list">
+              <div><strong>3 days</strong><span>Lamination</span></div>
+              <div><strong>27</strong><span>Layers</span></div>
+              <div><strong>82%</strong><span>Butterfat</span></div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+              <span class="price" style="font-size:1.8rem">$4.25</span>
+              <button class="btn btn--primary" data-add="Butter Croissant">Add to order</button>
+              <a class="btn btn--ghost" href="blog-croissant-lamination.html">How it's made</a>
+            </div>
+          </div>
+          <img src="images/croissant.svg" alt="Golden butter croissant">
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <div class="center reveal"><span class="eyebrow">From the case</span><h2>Sweet things, made by hand</h2></div>
+        <div class="filters reveal" style="margin-top:28px">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="viennoiserie">Viennoiserie</button>
+          <button class="filter-btn" data-filter="cakes">Cakes</button>
+          <button class="filter-btn" data-filter="gluten-free">Gluten-free</button>
+        </div>
+        <div class="grid grid-3">
+          <article class="card reveal" data-category="viennoiserie">
+            <div class="card-media"><img src="images/croissant.svg" alt="Butter croissant"></div>
+            <div class="card-body">
+              <div><span class="tag">Bestseller</span></div>
+              <h3>Butter Croissant</h3>
+              <p>27 layers of cultured butter and patience.</p>
+              <div class="card-meta"><span class="price">$4.25</span><button class="btn btn--primary btn--small" data-add="Butter Croissant">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal" data-category="viennoiserie">
+            <div class="card-media"><img src="images/cinnamon-roll.svg" alt="Cinnamon swirl"></div>
+            <div class="card-body">
+              <div><span class="tag tag--rose">Weekend</span></div>
+              <h3>Cinnamon Swirl</h3>
+              <p>Laminated dough, brown-butter cinnamon sugar and cream-cheese glaze.</p>
+              <div class="card-meta"><span class="price">$5.00</span><button class="btn btn--primary btn--small" data-add="Cinnamon Swirl">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal" data-category="cakes gluten-free">
+            <div class="card-media"><img src="images/macarons.svg" alt="Assorted macarons"></div>
+            <div class="card-body">
+              <div><span class="tag tag--sage">Gluten-free</span></div>
+              <h3>Macaron Box (6)</h3>
+              <p>Raspberry, pistachio, lavender, salted caramel, blueberry and lemon.</p>
+              <div class="card-meta"><span class="price">$15.00</span><button class="btn btn--primary btn--small" data-add="Macaron Box">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal" data-category="cakes">
+            <div class="card-media"><img src="images/layer-cake.svg" alt="Chocolate layer cake with berries"></div>
+            <div class="card-body">
+              <div><span class="tag tag--rose">48h pre-order</span></div>
+              <h3>Midnight Berry Cake</h3>
+              <p>Three layers of dark chocolate sponge, mascarpone cream and fresh berries. Serves 10.</p>
+              <div class="card-meta"><span class="price">$48.00</span><button class="btn btn--primary btn--small" data-add="Midnight Berry Cake">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal" data-category="viennoiserie">
+            <div class="card-media"><img src="images/brioche.svg" alt="Brioche buns"></div>
+            <div class="card-body">
+              <div><span class="tag">Daily</span></div>
+              <h3>Vanilla Custard Bun</h3>
+              <p>Pillowy brioche filled with Tahitian vanilla crème pâtissière.</p>
+              <div class="card-meta"><span class="price">$4.75</span><button class="btn btn--primary btn--small" data-add="Vanilla Custard Bun">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal" data-category="cakes">
+            <div class="card-media"><img src="images/layer-cake.svg" alt="Custom celebration cake"></div>
+            <div class="card-body">
+              <div><span class="tag tag--rose">Made to order</span></div>
+              <h3>Custom Celebration Cake</h3>
+              <p>Designed with our cake artist Aiko for birthdays, weddings and everything in between.</p>
+              <div class="card-meta"><span class="price">from $65</span><a class="btn btn--ghost btn--small" href="contact.html#order">Enquire</a></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="info-strip reveal">
+          <div><h3>⏰ Bake times</h3><p>Croissants at 7am, swirls and buns at 9am, cakes by the slice from 11am.</p></div>
+          <div><h3>🎂 Cake orders</h3><p>Order whole cakes 48 hours ahead, and custom designs at least 7 days ahead.</p></div>
+          <div><h3>⚠️ Allergens</h3><p>Pastries contain wheat, dairy and egg. Macarons contain almonds. Ask us for details.</p></div>
+        </div>
+        <div class="cta-band reveal" style="margin-top:56px">
+          <div><h2>Pair it with a loaf</h2><p>Complete your order with fresh sourdough from the bread shelf.</p></div>
+          <a class="btn" href="products-breads.html">See breads →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a class="brand" href="index.html"><img src="images/logo.svg" alt=""><span>Golden Crumb</span></a>
+          <p style="margin-top:1rem">A neighbourhood bakery baking real bread and honest pastry since 2014.</p>
+        </div>
+        <div>
+          <h4>Visit</h4>
+          <ul><li>214 Mill Street</li><li>Riverside, OR 97201</li><li><a href="tel:+15035550142">(503) 555-0142</a></li></ul>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="products-breads.html">Breads</a></li>
+            <li><a href="products-pastries.html">Pastries &amp; Cakes</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Crumbs in your inbox</h4>
+          <p>Weekly specials and new recipes. No spam, just bread.</p>
+          <form class="newsletter" data-demo="Thanks! You're on the list.">
+            <input type="email" placeholder="you@example.com" aria-label="Email address" required>
+            <button class="btn btn--primary btn--small" type="submit">Join</button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> Golden Crumb Bakery. Demo website.</span>
+        <span>Mon–Fri 7am–6pm · Sat–Sun 8am–4pm</span>
+      </div>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

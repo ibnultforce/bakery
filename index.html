@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golden Crumb Bakery — Fresh-baked daily</title>
+  <meta name="description" content="Golden Crumb is a neighbourhood bakery baking slow-fermented sourdough, flaky croissants and celebration cakes every morning.">
+  <link rel="icon" href="images/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="announce">🥖 Fresh sourdough out of the oven at 7am &amp; 12pm daily — pre-order before 6pm for next-day pickup</div>
+  <header class="site-header">
+    <nav class="container nav" aria-label="Main">
+      <a class="brand" href="index.html"><img src="images/logo.svg" alt=""><span>Golden Crumb</span></a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <ul class="nav-links">
+        <li><a href="index.html" aria-current="page">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="products-breads.html">Breads</a></li>
+        <li><a href="products-pastries.html">Pastries &amp; Cakes</a></li>
+        <li><a href="index.html#journal">Journal</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a class="cart-pill" href="contact.html#order">Order <span class="cart-count">0</span></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">Neighbourhood bakery · Est. 2014</span>
+          <h1>Baked slowly, <em>shared warmly.</em></h1>
+          <p class="lead">Long-fermented sourdough, buttery croissants and celebration cakes, made by hand every morning from stone-milled flour and local butter.</p>
+          <div class="hero-actions">
+            <a class="btn btn--primary" href="products-breads.html">Shop the bread →</a>
+            <a class="btn btn--ghost" href="about.html">Our story</a>
+          </div>
+          <div class="hero-stats">
+            <div><strong>36h</strong><span>Sourdough fermentation</span></div>
+            <div><strong>27</strong><span>Butter layers per croissant</span></div>
+            <div><strong>4.9★</strong><span>From 1,200+ reviews</span></div>
+          </div>
+        </div>
+        <div class="hero-art"><img src="images/hero.svg" alt="Sourdough, baguette and croissant on a wooden board" width="1200" height="900"></div>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="section section--alt">
+      <div class="container">
+        <div class="center reveal">
+          <span class="eyebrow">What we bake</span>
+          <h2>Something for every table</h2>
+          <p class="lead">Browse our two counters — the bread shelf and the pastry case. Everything is baked on site, every single day.</p>
+        </div>
+        <div class="grid grid-2" style="margin-top:40px">
+          <a class="tile reveal" href="products-breads.html">
+            <img src="images/sourdough.svg" alt="Country sourdough loaf">
+            <div class="tile-label"><h3>Artisan Breads</h3><span>Explore →</span></div>
+          </a>
+          <a class="tile reveal" href="products-pastries.html">
+            <img src="images/croissant.svg" alt="Butter croissant">
+            <div class="tile-label"><h3>Pastries &amp; Cakes</h3><span>Explore →</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bestsellers -->
+    <section class="section">
+      <div class="container">
+        <div class="center reveal">
+          <span class="eyebrow">Today's favourites</span>
+          <h2>Bestsellers from the counter</h2>
+        </div>
+        <div class="grid grid-4" style="margin-top:40px">
+          <article class="card reveal">
+            <div class="card-media"><img src="images/sourdough.svg" alt="Country sourdough"></div>
+            <div class="card-body">
+              <div><span class="tag tag--sage">Vegan</span></div>
+              <h3>Country Sourdough</h3>
+              <p>Crackly crust, open crumb, gentle tang.</p>
+              <div class="card-meta"><span class="price">$9.50</span><button class="btn btn--primary btn--small" data-add="Country Sourdough">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal">
+            <div class="card-media"><img src="images/croissant.svg" alt="Butter croissant"></div>
+            <div class="card-body">
+              <div><span class="tag">Bestseller</span></div>
+              <h3>Butter Croissant</h3>
+              <p>Three-day laminated with cultured butter.</p>
+              <div class="card-meta"><span class="price">$4.25</span><button class="btn btn--primary btn--small" data-add="Butter Croissant">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal">
+            <div class="card-media"><img src="images/cinnamon-roll.svg" alt="Cinnamon roll"></div>
+            <div class="card-body">
+              <div><span class="tag tag--rose">Weekend</span></div>
+              <h3>Cinnamon Swirl</h3>
+              <p>Brown-butter cinnamon, cream-cheese glaze.</p>
+              <div class="card-meta"><span class="price">$5.00</span><button class="btn btn--primary btn--small" data-add="Cinnamon Swirl">Add</button></div>
+            </div>
+          </article>
+          <article class="card reveal">
+            <div class="card-media"><img src="images/layer-cake.svg" alt="Chocolate layer cake"></div>
+            <div class="card-body">
+              <div><span class="tag tag--rose">Pre-order</span></div>
+              <h3>Midnight Berry Cake</h3>
+              <p>Dark chocolate sponge, berries, ganache drip.</p>
+              <div class="card-meta"><span class="price">$48</span><button class="btn btn--primary btn--small" data-add="Midnight Berry Cake">Add</button></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story split -->
+    <section class="section section--alt">
+      <div class="container split">
+        <img class="reveal" src="images/storefront.svg" alt="The Golden Crumb storefront with pink striped awning">
+        <div class="reveal">
+          <span class="eyebrow">Our craft</span>
+          <h2>Good bread takes time. We give it plenty.</h2>
+          <p>Every loaf starts with Margot — our 12-year-old sourdough starter — and rests for up to 36 hours before it meets the oven. No shortcuts, no additives, just flour, water, salt and patience.</p>
+          <ul class="features">
+            <li>Stone-milled heritage grains from farms within 100 miles</li>
+            <li>Cultured butter for every laminated pastry</li>
+            <li>Unsold bread donated nightly to the community pantry</li>
+          </ul>
+          <p style="margin-top:1.6rem"><a class="btn btn--ghost" href="about.html">Meet the bakers</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section">
+      <div class="container">
+        <div class="center reveal"><span class="eyebrow">Kind words</span><h2>Loved by the neighbourhood</h2></div>
+        <div class="grid grid-3" style="margin-top:40px">
+          <blockquote class="quote reveal">
+            <div class="stars">★★★★★</div>
+            <p>“The best croissant I've had outside Paris. I plan my Saturday mornings around this place.”</p>
+            <footer>— Priya S., regular since 2016</footer>
+          </blockquote>
+          <blockquote class="quote reveal">
+            <div class="stars">★★★★★</div>
+            <p>“They made our wedding cake and it was the talk of the night. Beautiful and genuinely delicious.”</p>
+            <footer>— Daniel &amp; Rosa M.</footer>
+          </blockquote>
+          <blockquote class="quote reveal">
+            <div class="stars">★★★★★</div>
+            <p>“That sourdough crust! Our family goes through two loaves a week, easily.”</p>
+            <footer>— The Okafor family</footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- Journal -->
+    <section class="section section--alt" id="journal">
+      <div class="container">
+        <div class="center reveal">
+          <span class="eyebrow">From the journal</span>
+          <h2>Notes from the bakehouse</h2>
+          <p class="lead">Recipes, techniques and behind-the-scenes stories from our early-morning crew.</p>
+        </div>
+        <div class="grid grid-2" style="margin-top:40px">
+          <article class="card post-card reveal">
+            <div class="card-media"><img src="images/blog-starter.svg" alt="Sourdough starter in a jar"></div>
+            <div class="card-body">
+              <div class="post-meta">Baking Basics · 8 min read · Oct 12, 2026</div>
+              <h3><a href="blog-sourdough-starter.html">How to Raise a Sourdough Starter in 7 Days</a></h3>
+              <p>Our head baker shares the exact feeding schedule we use to bring a new starter to life — and how to keep it thriving for years.</p>
+              <div class="card-meta"><a class="btn btn--ghost btn--small" href="blog-sourdough-starter.html">Read article</a></div>
+            </div>
+          </article>
+          <article class="card post-card reveal">
+            <div class="card-media"><img src="images/blog-lamination.svg" alt="Laminated dough and rolling pin"></div>
+            <div class="card-body">
+              <div class="post-meta">Behind the Counter · 6 min read · Sep 28, 2026</div>
+              <h3><a href="blog-croissant-lamination.html">The Secret Life of a Croissant: 3 Days, 27 Layers</a></h3>
+              <p>From butter block to golden crescent — follow one batch of croissants through our three-day lamination process.</p>
+              <div class="card-meta"><a class="btn btn--ghost btn--small" href="blog-croissant-lamination.html">Read article</a></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+      <div class="container">
+        <div class="cta-band reveal">
+          <div>
+            <h2>Planning a celebration?</h2>
+            <p>Custom cakes, pastry platters and bread boxes for events of every size.</p>
+          </div>
+          <a class="btn" href="contact.html#order">Request a quote</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a class="brand" href="index.html"><img src="images/logo.svg" alt=""><span>Golden Crumb</span></a>
+          <p style="margin-top:1rem">A neighbourhood bakery baking real bread and honest pastry since 2014.</p>
+        </div>
+        <div>
+          <h4>Visit</h4>
+          <ul><li>214 Mill Street</li><li>Riverside, OR 97201</li><li><a href="tel:+15035550142">(503) 555-0142</a></li></ul>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="products-breads.html">Breads</a></li>
+            <li><a href="products-pastries.html">Pastries &amp; Cakes</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Crumbs in your inbox</h4>
+          <p>Weekly specials and new recipes. No spam, just bread.</p>
+          <form class="newsletter" data-demo="Thanks! You're on the list.">
+            <input type="email" placeholder="you@example.com" aria-label="Email address" required>
+            <button class="btn btn--primary btn--small" type="submit">Join</button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> Golden Crumb Bakery. Demo website.</span>
+        <span>Mon–Fri 7am–6pm · Sat–Sun 8am–4pm</span>
+      </div>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Butter croissant">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdeedd"/><stop offset="1" stop-color="#f3cfb0"/></linearGradient>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6bd62"/><stop offset="1" stop-color="#b0601f"/></linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="400" cy="320" r="220" fill="#fff" opacity=".55"/>
+  <circle cx="400" cy="320" r="200" fill="none" stroke="#e8c7a2" stroke-width="4"/>
+  <ellipse cx="400" cy="430" rx="230" ry="24" fill="#5a3825" opacity=".15"/>
+  <g transform="translate(400 330)">
+    <path d="M-230 90 Q-240 -60 -90 -105 Q0 -135 90 -105 Q240 -60 230 90 Q185 30 125 45 Q60 -15 0 -15 Q-60 -15 -125 45 Q-185 30 -230 90z" fill="url(#c)"/>
+    <path d="M-90 -105 Q-105 0 -125 45M0 -133 Q0 -60 0 -15M90 -105 Q105 0 125 45M-170 -50 Q-170 20 -185 60M170 -50 Q170 20 185 60" fill="none" stroke="#7d3f12" stroke-width="7" opacity=".5"/>
+    <path d="M-60 -95 Q-45 -65 -30 -80M40 -95 Q55 -65 70 -80M-150 -40 Q-140 -10 -125 -25" fill="none" stroke="#fde4b2" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>
