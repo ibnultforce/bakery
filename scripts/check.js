@@ -40,8 +40,12 @@ const served = new Set();
   for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, item.name);
     if (item.isDirectory()) walk(full, `${prefix}/${item.name}`);
-    else if (item.name === 'index.html') served.add(`${prefix}/`);
-    else served.add(`${prefix}/${item.name}`);
+    else {
+      // A folder's index.html is served at the folder's address and at its own: imported pages
+      // often link to /index.html, which GitHub Pages serves.
+      if (item.name === 'index.html') served.add(`${prefix}/`);
+      served.add(`${prefix}/${item.name}`);
+    }
   }
 })(paths.dist);
 
