@@ -127,6 +127,33 @@ export async function callClaude({ apiKey, model, systemPrompt, userContent, res
  * The reply is streamed, so a long one never outlasts fetch's 5-minute wait
  * for a response.
  */
+// "Not now" answers (rate limited, overloaded, a passing server error) and a dropped connection
+// are tried again after a short wait, so a run of many requests doesn't fail on a busy moment.
+const RETRY_STATUSES = new Set([408, 429, 500, 502, 503, 504, 529]);
+const RETRY_DELAYS_MS = [2000, 6000, 15000];
+
+async function fetchRetrying(url, init) {
+  for (let attempt = 0; ; attempt++) {
+    let response = null;
+    let failure = null;
+    try {
+      response = await fetch(url, init);
+    } catch (err) {
+      failure = err;
+    }
+    const retryable = failure || (RETRY_STATUSES.has(response.status) && response.headers.get('x-should-retry') !== 'false');
+    if (!retryable || attempt >= RETRY_DELAYS_MS.length) {
+      if (failure) throw failure;
+      return response;
+    }
+    const after = Number(response?.headers.get('retry-after'));
+    const wait = Number.isFinite(after) && after > 0 ? Math.min(after * 1000, 60000) : RETRY_DELAYS_MS[attempt];
+    await response?.body?.cancel().catch(() => {});
+    console.log(`  ! Claude ${response ? `answered ${response.status}` : 'could not be reached'}; trying again in ${Math.round(wait / 1000)} s.`);
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+}
+
 export async function requestClaude({ apiKey, model, systemPrompt, userContent, messages, research, maxTokens = 16000, effort = 'medium', cache = false }) {
   const options = modelOptions(model, effort);
   const body = {
@@ -143,7 +170,7 @@ export async function requestClaude({ apiKey, model, systemPrompt, userContent, 
     body.tools = [{ type, name: 'web_search', max_uses: 4 }];
   }
 
-  const response = await fetch(API_URL, {
+  const response = await fetchRetrying(API_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', ...options.headers },
     body: JSON.stringify(body),
