@@ -1,3 +1,45 @@
 # Work log
 
 Written automatically: one line per change Claude made to this site that was kept, oldest first. Claude reads this before every request so new work stays consistent with earlier work. Older lines move to knowledge/archive/. Standing decisions belong in knowledge/notes.md, not here.
+- 2026-10-30 · page:convert · content/pages/blog-croissant-lamination.md · converted blog-croissant-lamination.html into the page, keeping its styles
+  - Replaced the page body with the croissant-lamination article, excluding its header, breadcrumbs, and footer.
+  - Added page-scoped styles at `/assets/css/imported/blog-croissant-lamination.css` and loaded Fraunces and Inter fonts.
+  - Updated the title and SEO fields, set `hideCta: true`, and added the page script.
+- 2026-10-30 · page:convert · content/pages/about.md · converted about.html into the page, keeping its styles
+  - Replaced the About page body with the 7,336-character HTML from about.html.
+  - Saved 184 scoped CSS rules in assets/css/imported/about.css and added the Fraunces and Inter font stylesheet.
+  - Updated frontmatter with revised title and descriptions, SEO fields, stylesheet, fonts, hideCta, ownChrome, and the about/main.js script.
+- 2026-10-30 · page:convert · content/pages/blog-sourdough-starter.md · converted blog-sourdough-starter.html into the page, keeping its styles
+  - Replaced the page body and content with the sourdough starter article HTML, excluding its header, breadcrumbs, and footer.
+  - Saved the article’s 148 CSS rules in page-scoped `assets/css/imported/blog-sourdough-starter.css`.
+  - Updated the description and added `metaTitle`, `metaDescription`, `focusKeyword`, stylesheet, font, script, `hideCta`, and `scriptRemoved` fields.
+- 2026-10-30 · page:convert · content/pages/contact.md · converted contact.html into the page, keeping its styles
+  - Replaced the page body with the 7,458-character contact.html markup and replaced the old body and content fields.
+  - Added the 184-rule page-scoped stylesheet at `/assets/css/imported/contact.css`.
+  - Set contact SEO metadata, loaded the Fraunces and Inter font stylesheet, and enabled `hideCta` and `ownChrome`.
+  - Added the deferred-state settings for `/assets/js/imported/contact/main.js` in the page frontmatter.
+- 2026-10-30 · page:convert · content/pages/products-breads.md · converted products-breads.html into the page, keeping its styles
+  - Replaced the page body with the HTML from `products-breads.html`.
+  - Added page-scoped styles in `assets/css/imported/products-breads.css` and loaded the Fraunces and Inter font stylesheet.
+  - Updated frontmatter with artisan bread titles and descriptions, `focusKeyword`, `hideCta`, `ownChrome`, stylesheet, fonts, and script fields.
+- 2026-10-30 · page:convert · content/pages/products-pastries.md · converted products-pastries.html into the page, keeping its styles
+  - Replaced the page body with the 9,786-character HTML from products-pastries.html.
+  - Saved its 184 CSS rules in the page-scoped assets/css/imported/products-pastries.css and added the Google Fonts stylesheet.
+  - Updated the title and SEO frontmatter, retained the slug, URL, and order, and added hideCta, ownChrome, and the imported main.js script entry.
+- 2026-10-30 · page:convert · content/pages/home.md · converted index.html into the page, keeping its styles
+  - Replaced the page body with the HTML from `index.html`, including its styling.
+  - Saved 184 scoped CSS rules to `assets/css/imported/home.css` and added the Fraunces and Inter font stylesheet.
+  - Replaced the old content fields with bakery metadata, stylesheet and font settings, CTA and chrome flags, and a deferred-script configuration.
+- 2026-10-30 · page:edit · content/pages/about.md · Change every link whose address is /index.html (or index.html) to just "/" so it goes to the homepage. Change nothing else: keep all wording, layout, styles an…
+  - Changed homepage links in the header, breadcrumb, and footer from `/index.html` to `/`, including the Journal link to `/#journal`.
+- 2026-10-30 · page:edit · content/pages/contact.md · Change every link whose address is /index.html (or index.html) to just "/" so it goes to the homepage. Change nothing else: keep all wording, layout, styles an…
+  - Changed the header and footer brand links, Home navigation link, and breadcrumb link from `/index.html` to `/`.
+  - Updated the Journal link from `/index.html#journal` to `/#journal`.
+- 2026-10-30 · page:edit · content/pages/home.md · Change every link whose address is /index.html (or index.html) to just "/" so it goes to the homepage. Change nothing else: keep all wording, layout, styles an…
+  - Changed the header brand and Home links from `/index.html` to `/`, and the Journal link from `/index.html#journal` to `/#journal`.
+- 2026-10-30 · page:edit · content/pages/products-pastries.md · Change every link whose address is /index.html (or index.html) to just "/" so it goes to the homepage. Change nothing else: keep all wording, layout, styles an…
+  - Changed the header logo and Home links from `/index.html` to `/`.
+  - Updated the Journal link to `/#journal` and the breadcrumb and footer logo links to `/`.
+- 2026-10-30 · page:edit · content/pages/products-breads.md · Change every link whose address is /index.html (or index.html) to just "/" so it goes to the homepage. Change nothing else: keep all wording, layout, styles an…
+  - Replaced `/index.html` homepage links with `/` in the header, breadcrumb, and footer.
+  - Updated the Journal link from `/index.html#journal` to `/#journal`.
