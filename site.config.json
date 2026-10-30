@@ -1,0 +1,113 @@
+{
+  "name": "My Website",
+  "shortName": "My Website",
+  "url": "https://example.com",
+  "tagline": "",
+  "footerTagline": "",
+  "description": "",
+  "language": "en",
+  "locale": "en_US",
+  "foundedYear": "",
+  "themeColor": "#FFFFFF",
+  "brand": {
+    "logoText": "My Website",
+    "logo": "",
+    "logoDark": "",
+    "logoMark": "/assets/img/logo-mark.svg",
+    "favicon": "",
+    "defaultOgImage": "/assets/img/og-default.svg"
+  },
+  "contact": {
+    "email": "",
+    "phone": "",
+    "address": "",
+    "hours": "",
+    "whatsapp": "",
+    "whatsappUrl": "",
+    "bookingUrl": "",
+    "bookingLabel": "Book a call",
+    "responseTime": ""
+  },
+  "social": {
+    "linkedin": "",
+    "x": "",
+    "facebook": "",
+    "instagram": "",
+    "youtube": "",
+    "github": ""
+  },
+  "collections": {
+    "pages": {
+      "dir": "content/pages",
+      "urlPattern": "/:slug.html",
+      "layout": "page",
+      "sort": "order"
+    },
+    "products": {
+      "dir": "content/products",
+      "urlPattern": "/products/:slug.html",
+      "layout": "page",
+      "sort": "order",
+      "index": {
+        "label": "Products",
+        "url": "/products.html",
+        "layout": "page"
+      }
+    },
+    "services": {
+      "dir": "content/services",
+      "urlPattern": "/services/:slug.html",
+      "layout": "page",
+      "sort": "order",
+      "index": {
+        "label": "Services",
+        "url": "/services.html",
+        "layout": "page"
+      }
+    },
+    "blog": {
+      "dir": "content/blog",
+      "urlPattern": "/blog/:slug.html",
+      "layout": "page",
+      "sort": "date:desc",
+      "index": {
+        "label": "Blog",
+        "url": "/blog.html",
+        "layout": "page"
+      }
+    },
+    "caseStudies": {
+      "dir": "content/case-studies",
+      "urlPattern": "/case-studies/:slug.html",
+      "layout": "page",
+      "sort": "order",
+      "index": {
+        "label": "Case studies",
+        "url": "/case-studies.html",
+        "layout": "page"
+      }
+    }
+  },
+  "deploy": {
+    "provider": "github-pages",
+    "cname": "",
+    "branch": "main",
+    "outputDir": "dist"
+  },
+  "seo": {
+    "titleTemplate": "{title} | {site}",
+    "homeTitle": "{name} | {tagline}",
+    "twitterHandle": "",
+    "googleVerification": "",
+    "bingVerification": ""
+  },
+  "automation": {
+    "model": "claude-opus-5-5",
+    "defaultAuthor": ""
+  },
+  "updates": {
+    "migrations": [
+      "0001-contact-phone-address-hours"
+    ]
+  }
+}

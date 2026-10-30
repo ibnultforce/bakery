@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Golden Crumb Bakery storefront">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe3c4"/><stop offset="1" stop-color="#f6d0a6"/></linearGradient>
+  </defs>
+  <rect width="1000" height="700" fill="url(#sky)"/>
+  <circle cx="820" cy="140" r="60" fill="#fff1d6"/>
+  <rect x="0" y="620" width="1000" height="80" fill="#c9b49a"/>
+  <!-- building -->
+  <rect x="160" y="140" width="680" height="480" fill="#f4ece0"/>
+  <rect x="160" y="140" width="680" height="40" fill="#5a3825"/>
+  <rect x="140" y="120" width="720" height="30" fill="#6a4630"/>
+  <!-- sign -->
+  <rect x="300" y="200" width="400" height="70" rx="10" fill="#5a3825"/>
+  <text x="500" y="247" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#f3c27a" letter-spacing="2">GOLDEN CRUMB</text>
+  <!-- awning -->
+  <g>
+    <path d="M190 300h620l-30 70H220z" fill="#e8a598"/>
+    <g fill="#fbf5ec"><path d="M252 300h62l-8 70h-62z"/><path d="M376 300h62l-4 70h-62z"/><path d="M500 300h62l0 70h-62z"/><path d="M624 300h62l4 70h-62z"/><path d="M748 300h62l-30 70h-36z"/></g>
+    <path d="M220 370 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0 q20 22 40 0" fill="#e8a598"/>
+  </g>
+  <!-- windows -->
+  <rect x="210" y="400" width="250" height="180" fill="#fbe9c9" stroke="#5a3825" stroke-width="10"/>
+  <rect x="540" y="400" width="250" height="180" fill="#fbe9c9" stroke="#5a3825" stroke-width="10"/>
+  <g>
+    <rect x="225" y="530" width="220" height="10" fill="#a87a50"/>
+    <ellipse cx="275" cy="515" rx="40" ry="20" fill="#c47a3a"/><ellipse cx="370" cy="512" rx="50" ry="24" fill="#d58e47"/>
+    <rect x="555" y="530" width="220" height="10" fill="#a87a50"/>
+    <rect x="590" y="480" width="80" height="50" fill="#5c2f16"/><rect x="590" y="476" width="80" height="10" fill="#f5d9c8"/>
+    <circle cx="720" cy="512" r="20" fill="#f0b8ac"/><circle cx="750" cy="516" r="16" fill="#bcd09f"/>
+  </g>
+  <!-- door -->
+  <rect x="470" y="420" width="60" height="200" fill="#8a9a5b"/>
+  <circle cx="520" cy="520" r="4" fill="#f3c27a"/>
+  <!-- planters -->
+  <rect x="180" y="580" width="60" height="40" fill="#a86c3c"/><circle cx="210" cy="565" r="30" fill="#8a9a5b"/>
+  <rect x="760" y="580" width="60" height="40" fill="#a86c3c"/><circle cx="790" cy="565" r="30" fill="#8a9a5b"/>
+</svg>

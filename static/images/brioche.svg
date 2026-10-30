@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Golden brioche loaf">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbecd2"/><stop offset="1" stop-color="#f0cfa0"/></linearGradient>
+    <radialGradient id="g" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#f6c06a"/><stop offset=".65" stop-color="#d0852e"/><stop offset="1" stop-color="#8f4c16"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="470" rx="260" ry="28" fill="#5a3825" opacity=".2"/>
+  <rect x="190" y="360" width="420" height="110" rx="14" fill="#c89a62"/>
+  <circle cx="270" cy="320" r="95" fill="url(#g)"/>
+  <circle cx="400" cy="300" r="105" fill="url(#g)"/>
+  <circle cx="530" cy="320" r="95" fill="url(#g)"/>
+  <g fill="#fff3d6" opacity=".55"><ellipse cx="245" cy="270" rx="30" ry="14"/><ellipse cx="375" cy="245" rx="34" ry="15"/><ellipse cx="505" cy="270" rx="30" ry="14"/></g>
+  <g fill="#fff"><circle cx="300" cy="300" r="3"/><circle cx="420" cy="280" r="3"/><circle cx="550" cy="310" r="3"/><circle cx="450" cy="330" r="2.5"/></g>
+</svg>

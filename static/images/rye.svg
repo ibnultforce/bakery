@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Seeded rye loaf, sliced">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe2cf"/><stop offset="1" stop-color="#d6bf9f"/></linearGradient>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5530"/><stop offset="1" stop-color="#4f2c14"/></linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="470" rx="300" ry="30" fill="#3d2414" opacity=".2"/>
+  <rect x="150" y="220" width="380" height="240" rx="70" fill="url(#c)"/>
+  <rect x="150" y="220" width="380" height="60" rx="30" fill="#a46a3e" opacity=".5"/>
+  <g fill="#e9d29a"><ellipse cx="210" cy="260" rx="6" ry="3"/><ellipse cx="260" cy="245" rx="6" ry="3" transform="rotate(30 260 245)"/><ellipse cx="320" cy="262" rx="6" ry="3"/><ellipse cx="380" cy="240" rx="6" ry="3" transform="rotate(-30 380 240)"/><ellipse cx="440" cy="258" rx="6" ry="3"/><ellipse cx="490" cy="248" rx="6" ry="3" transform="rotate(20 490 248)"/></g>
+  <!-- slices -->
+  <g transform="translate(560 250)">
+    <rect x="0" y="0" width="70" height="210" rx="30" fill="#6a3d1d"/>
+    <rect x="8" y="8" width="54" height="194" rx="24" fill="#b88a5e"/>
+    <g fill="#5a3825" opacity=".6"><circle cx="25" cy="40" r="3"/><circle cx="40" cy="80" r="3"/><circle cx="22" cy="120" r="3"/><circle cx="42" cy="160" r="3"/></g>
+  </g>
+  <g transform="translate(650 270) rotate(8)">
+    <rect x="0" y="0" width="64" height="190" rx="28" fill="#6a3d1d"/>
+    <rect x="7" y="7" width="50" height="176" rx="22" fill="#c39a6e"/>
+    <g fill="#5a3825" opacity=".6"><circle cx="22" cy="40" r="3"/><circle cx="36" cy="90" r="3"/><circle cx="24" cy="140" r="3"/></g>
+  </g>
+</svg>

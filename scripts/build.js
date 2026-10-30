@@ -1,0 +1,377 @@
+#!/usr/bin/env node
+/**
+ * Builds the whole site into dist/.
+ *
+ *   node scripts/build.js            production build
+ *   node scripts/build.js --drafts   include drafts and future-dated posts
+ *
+ * Nothing here is page-specific. Pages appear because content files exist,
+ * navigation appears because content/data/navigation.json describes it.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { TemplateEngine, escapeHtml } from './lib/template.js';
+import { basePath, loadSite, paths, outputPathFor, pick, markActive, ROOT } from './lib/content.js';
+import { renderMarkdown, excerpt } from './lib/markdown.js';
+import { buildJsonLd } from './lib/schema.js';
+import { pageSeo, seoSettings } from './lib/seo.js';
+import { buildCss } from './lib/css.js';
+
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const option = (name) => argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+
+// --proposal=<file.json> builds the site as it would be with a Claude proposal applied
+// (edit-page.js --proposal-out: { file, content, files: [{ file, content }] }), without
+// touching the files, into --out=<dir>. Drafts are included, so a draft page can be seen.
+const proposalOption = option('proposal');
+const outOption = option('out');
+const includeDrafts = args.has('--drafts') || args.has('--dev') || Boolean(proposalOption);
+const outDir = outOption ? path.resolve(ROOT, outOption) : paths.dist;
+if (!outDir.startsWith(ROOT + path.sep)) {
+  console.error(`\n  --out must be a folder inside the repository, not ${outOption}.\n`);
+  process.exit(1);
+}
+
+// Every root-relative href/src gets this prefix: /dist in development (the
+// site is often previewed from a server that serves this whole project
+// directory), /<repo> on a GitHub Pages project site (see basePath()).
+// Absolute URLs (canonical, og:*, JSON-LD, sitemap, RSS) are built from
+// site.url instead, which already includes that path.
+const base = basePath();
+const NOT_FOUND_URL = '/404.html';
+
+function withBase(html) {
+  if (!base) return html;
+  return html.replace(/((?:href|src)=["'])\/(?!\/)/g, `$1${base}/`);
+}
+
+/* ------------------------------------------------------------------- helpers */
+
+/** Every partial and layout; a proposal's header or footer (`overrides`) is used instead of the file. */
+function loadTemplates(engine, overrides) {
+  for (const [dir, prefix, rel] of [[paths.partials, '', 'templates/partials'], [paths.layouts, 'layout:', 'templates/layouts']]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+      const proposed = overrides?.get(`${rel}/${file}`);
+      engine.add(prefix + file.replace(/\.html$/, ''), proposed ?? fs.readFileSync(path.join(dir, file), 'utf8'));
+    }
+  }
+}
+
+/** `transform`, when given, is applied to `.html` files instead of a raw byte
+ * copy — used for static/ so its root-relative href/src get the same /dist
+ * dev-mode prefix every templated page already gets via withBase(). Without
+ * it, a static page's own links (or an injected header/footer's) resolve
+ * against the wrong root whenever dist/ is served from within the project
+ * directory rather than at the domain root. */
+function copyDir(from, to, transform) {
+  if (!fs.existsSync(from)) return 0;
+  fs.mkdirSync(to, { recursive: true });
+  let count = 0;
+  for (const item of fs.readdirSync(from, { withFileTypes: true })) {
+    const src = path.join(from, item.name);
+    const dest = path.join(to, item.name);
+    if (item.isDirectory()) {
+      count += copyDir(src, dest, transform);
+    } else if (transform && item.name.endsWith('.html')) {
+      fs.writeFileSync(dest, transform(fs.readFileSync(src, 'utf8')));
+      count++;
+    } else {
+      fs.copyFileSync(src, dest);
+      count++;
+    }
+  }
+  return count;
+}
+
+function write(file, contents) {
+  const target = path.join(outDir, file);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, contents);
+}
+
+/**
+ * The proposal --proposal names: `overrides` (content/ pages and data files, and a Claude-designed
+ * header or footer under templates/partials/, read instead of the files on disk) and `assets` (a converted page's own CSS and scripts, written over the copied
+ * assets/). Anything else in it (a global stylesheet under styles/) doesn't change what's built.
+ */
+function loadProposal(file) {
+  const proposal = JSON.parse(fs.readFileSync(path.resolve(ROOT, file), 'utf8'));
+  const overrides = new Map();
+  const assets = [];
+  const add = (rel, content) => {
+    if (typeof rel !== 'string' || typeof content !== 'string' || rel.split('/').some((seg) => seg === '..' || !seg)) return;
+    if (/^content\/.+\.(md|json)$/.test(rel) || /^templates\/partials\/(header|footer)\.html$/.test(rel)) overrides.set(rel, content);
+    else if (rel.startsWith('assets/')) assets.push({ rel, content });
+  };
+  add(proposal.file, proposal.content);
+  for (const extra of Array.isArray(proposal.files) ? proposal.files : []) add(extra?.file, extra?.content);
+  if (!overrides.has(proposal.file)) throw new Error(`${file} isn't a proposal for a page under content/ or for the header and footer.`);
+  return { proposal, overrides, assets };
+}
+
+/**
+ * The CSS for a proposal build: styles/main.css with its relative paths made absolute and the
+ * proposed files added to Tailwind's sources, so classes only the proposal uses are compiled.
+ * Written inside the output folder (node_modules is still found by walking up from there).
+ */
+function proposalCss(overrides) {
+  const sources = path.join(outDir, '.proposal-sources');
+  for (const [rel, content] of overrides) {
+    fs.mkdirSync(path.dirname(path.join(sources, rel)), { recursive: true });
+    fs.writeFileSync(path.join(sources, rel), content);
+  }
+  const stylesDir = path.join(ROOT, 'styles');
+  const absolute = (rel) => path.resolve(stylesDir, rel).split(path.sep).join('/');
+  const css = fs
+    .readFileSync(path.join(stylesDir, 'main.css'), 'utf8')
+    .replace(/(@(?:source|import|plugin|reference)\s+)(["'])(\.\.?\/[^"']*)\2/g, (_, at, quote, rel) => `${at}${quote}${absolute(rel)}${quote}`);
+  const input = path.join(outDir, '.proposal-input.css');
+  fs.writeFileSync(input, `${css}\n@source "${sources.split(path.sep).join('/')}";\n`);
+  return { input, output: path.join(outDir, '.proposal-main.css') };
+}
+
+/* --------------------------------------------------------------------- build */
+
+function build() {
+  const started = Date.now();
+  const pending = proposalOption ? loadProposal(proposalOption) : null;
+  const model = loadSite({ includeDrafts, includeFuture: includeDrafts, overrides: pending?.overrides });
+  const { site, data, collections, nav, all, pageExists } = model;
+  // Site-wide SEO settings with their defaults, for base.html (verification tags, X handle).
+  site.seo = seoSettings(site);
+
+  // Pages the templates link to by name, null when this site doesn't have them (a site tree
+  // may replace the template's own pages): the contact page and each collection's listing.
+  const pageUrls = { contact: pageExists('/contact.html') ? '/contact.html' : null };
+  for (const [name, config] of Object.entries(site.collections)) {
+    pageUrls[name] = config.index?.url && pageExists(config.index.url) ? config.index.url : null;
+  }
+
+  const engine = new TemplateEngine();
+  loadTemplates(engine, pending?.overrides);
+
+  fs.rmSync(outDir, { recursive: true, force: true });
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const written = [];
+  const searchIndex = [];
+
+  const lists = Object.fromEntries(
+    Object.entries(collections).map(([name, entries]) => [name, entries.map(pick)]),
+  );
+
+  // GitHub Pages serves 404.html for any address the site doesn't have. A site may write its own
+  // page at /404.html; otherwise this one is built, from templates/partials/not-found.html. It's
+  // marked notFound either way, so base.html can tell the visit counter (assets/js/analytics.js).
+  // It isn't one of the site's pages: not in the sitemap, the search index or check.js.
+  const ownNotFound = all.find((entry) => entry.url === NOT_FOUND_URL);
+  if (ownNotFound) ownNotFound.notFound = true;
+
+  function render(entry) {
+    // A page converted with its own styles (edit-page.js --keep-styles) replaces the page
+    // completely: its HTML shows edge to edge, without its layout's hero, FAQ, call to action
+    // or related items, whatever layout it has.
+    const imported = typeof entry.stylesheet === 'string' && entry.stylesheet.startsWith('/assets/css/imported/');
+    const layoutName = imported ? 'layout:imported' : `layout:${entry.layout}`;
+    if (!engine.templates[layoutName]) {
+      throw new Error(`${entry.sourceFile}: layout "${entry.layout}" not found in templates/layouts/`);
+    }
+
+    // Breadcrumb parents come from the collection config, never hand-written.
+    // A listing page that doesn't exist isn't a parent.
+    const parent = site.collections[entry.collection]?.index;
+    const parentOk = Boolean(parent?.url && pageExists(parent.url));
+    const page = {
+      ...entry,
+      parentLabel: entry.parentLabel || (parentOk ? parent.label : null) || null,
+      parentUrl: entry.parentUrl || (parentOk ? parent.url : null),
+    };
+    // Title, description, canonical, robots and social tags, with the site's defaults (lib/seo.js).
+    page.seo = pageSeo(page, site);
+
+    // FAQ entries are filtered from the one shared file by topic. An imported page shows none.
+    const allFaq = data.faq?.items || [];
+    const topics = page.faqTopics || page.faqTopic;
+    const ownFaq = Array.isArray(page.faq) ? page.faq : [];
+    const faqItems = imported
+      ? []
+      : ownFaq.length
+        ? ownFaq
+        : topics
+          ? allFaq.filter((item) => [].concat(topics).includes(item.topic))
+          : page.showFaq
+            ? allFaq
+            : [];
+
+    // Content bodies may use template syntax, so shared values stay in one place.
+    const context = {
+      site,
+      data,
+      nav: { ...nav, header: { ...nav.header, items: markActive(nav.header.items, entry.url) } },
+      page,
+      collections: lists,
+      ...lists,
+      faqItems,
+      pageUrls,
+      isHome: entry.url === '/',
+      latestPosts: (lists.blog || []).filter((p) => p.url !== entry.url).slice(0, 3),
+      recentPosts: (lists.blog || []).filter((p) => p.url !== entry.url).slice(0, 5),
+      productPosts: (collections.blog || [])
+        .filter((p) => typeof p.relatedProduct === 'string' && p.relatedProduct.startsWith('/products/'))
+        .slice(0, 5)
+        .map(pick),
+      otherProducts: (lists.products || []).filter((p) => p.url !== entry.url),
+      otherServices: (lists.services || []).filter((p) => p.url !== entry.url).slice(0, 3),
+      relatedItems: [page.relatedProduct]
+        .filter(Boolean)
+        .map((url) => model.byUrl.get(url))
+        .filter(Boolean)
+        .map(pick),
+    };
+
+    const rerendered = renderMarkdown(engine.renderString(entry.body, context));
+    context.page = { ...page, content: rerendered.html, headings: rerendered.headings };
+
+    const main = engine.render(layoutName, context);
+    const html = engine.render('base', {
+      ...context,
+      main,
+      jsonLd: buildJsonLd({ site, page: context.page, faqItems }),
+    });
+
+    const file = outputPathFor(entry.url);
+    write(file, withBase(html));
+    return file;
+  }
+
+  for (const entry of all) {
+    const file = render(entry);
+    written.push({ url: entry.url, file, collection: entry.collection });
+
+    if (entry.noindex !== true) {
+      searchIndex.push({
+        title: entry.title,
+        url: entry.url,
+        collection: entry.collection,
+        description: entry.description,
+        tags: entry.tags,
+        text: excerpt(entry.body, 400),
+      });
+    }
+  }
+
+  if (!ownNotFound && engine.templates['not-found']) {
+    render({
+      title: 'Page not found',
+      url: NOT_FOUND_URL,
+      absoluteUrl: `${site.url.replace(/\/$/, '')}${NOT_FOUND_URL}`,
+      layout: 'page',
+      collection: 'pages',
+      sourceFile: 'templates/partials/not-found.html',
+      body: '{{> not-found }}',
+      noindex: true,
+      notFound: true,
+    });
+  }
+
+  /* ---------------------------------------------------------------- feeds */
+
+  // A page whose canonical points at another URL asks search engines to index that one instead.
+  const indexable = all.filter((e) => e.noindex !== true && !pageSeo(e, site).canonicalElsewhere);
+  const sitemap =
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    indexable
+      .map((entry) => {
+        const lastmod = entry.updated || entry.date || site.buildTime;
+        const priority = entry.url === '/' ? '1.0' : entry.collection === 'blog' ? '0.6' : '0.8';
+        return `  <url>\n    <loc>${entry.absoluteUrl}</loc>\n    <lastmod>${new Date(lastmod).toISOString().slice(0, 10)}</lastmod>\n    <changefreq>${entry.collection === 'blog' ? 'monthly' : 'weekly'}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+      })
+      .join('\n') +
+    `\n</urlset>\n`;
+  write('sitemap.xml', sitemap);
+
+  const posts = (collections.blog || []).slice(0, 25);
+  const rss =
+    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n` +
+    `  <title>${escapeHtml(site.name)} Blog</title>\n  <link>${site.url}</link>\n` +
+    `  <description>${escapeHtml(site.description)}</description>\n  <language>${site.language || 'en'}</language>\n` +
+    `  <atom:link href="${site.url}/rss.xml" rel="self" type="application/rss+xml"/>\n` +
+    posts
+      .map(
+        (post) =>
+          `  <item>\n    <title>${escapeHtml(post.title)}</title>\n    <link>${post.absoluteUrl}</link>\n    <guid isPermaLink="true">${post.absoluteUrl}</guid>\n    <pubDate>${new Date(post.date || site.buildTime).toUTCString()}</pubDate>\n    <description>${escapeHtml(post.excerpt)}</description>\n  </item>`,
+      )
+      .join('\n') +
+    `\n</channel>\n</rss>\n`;
+  write('rss.xml', rss);
+
+  write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${site.url}/sitemap.xml\n`);
+  write('search-index.json', JSON.stringify(searchIndex));
+
+  // Only when this build is for that domain: a copy published on github.io
+  // must not claim the template's domain.
+  if (site.deploy?.cname && new URL(site.url).hostname === site.deploy.cname) write('CNAME', `${site.deploy.cname}\n`);
+  write('.nojekyll', '');
+
+  const redirects = (data.redirects || [])
+    .map((rule) => `${rule.from} ${rule.to} ${rule.status || 301}`)
+    .join('\n');
+  if (redirects) write('_redirects', `${redirects}\n`);
+
+  // Tailwind scans the templates, so CSS is compiled after pages are rendered
+  // and before assets are copied into dist/.
+  // A proposal build compiles into its own folder, leaving assets/css/main.css alone.
+  const cssFiles = pending ? proposalCss(pending.overrides) : null;
+  const css = buildCss({ minify: !includeDrafts, ...cssFiles });
+
+  const assetCount = copyDir(paths.assets, path.join(outDir, 'assets'));
+  const staticCount = copyDir(path.join(ROOT, 'static'), outDir, withBase);
+
+  if (pending) {
+    // An older lib/css.js ignores input/output and writes assets/css/main.css, copied above.
+    if (fs.existsSync(cssFiles.output)) {
+      fs.mkdirSync(path.join(outDir, 'assets/css'), { recursive: true });
+      fs.renameSync(cssFiles.output, path.join(outDir, 'assets/css/main.css'));
+    }
+    for (const { rel, content } of pending.assets) write(rel, content);
+    // Where the proposed page is, for whoever shows it (the Twinstack web app's preview).
+    const page = all.find((entry) => entry.sourceFile.split(path.sep).join('/') === pending.proposal.file);
+    // A header and footer proposal is shown on the homepage.
+    const url = page?.url ?? (pending.proposal.file.startsWith('templates/') ? '/' : null);
+    write('.proposal.json', `${JSON.stringify({ file: pending.proposal.file, url, createdAt: pending.proposal.createdAt ?? null }, null, 2)}\n`);
+  }
+
+  /* --------------------------------------------------------------- report */
+
+  const byCollection = written.reduce((acc, item) => {
+    acc[item.collection] = (acc[item.collection] || 0) + 1;
+    return acc;
+  }, {});
+
+  console.log(`\n  ${site.name} — build complete in ${Date.now() - started}ms`);
+  console.log(`  ${written.length} pages, ${assetCount + staticCount} static files, ${(css.bytes / 1024).toFixed(1)}kB CSS -> ${path.relative(ROOT, outDir).split(path.sep).join('/')}/\n`);
+  for (const [name, count] of Object.entries(byCollection).sort()) {
+    console.log(`    ${String(count).padStart(3)}  ${name}`);
+  }
+  if (includeDrafts) console.log('\n  (drafts and future-dated posts included)');
+  if (base) console.log(`  (internal links prefixed with ${base})`);
+  if (nav.missing.length) {
+    console.log("\n  Navigation links to pages this site doesn't have, left out of every page:");
+    for (const { where, label, url } of nav.missing) console.log(`    ${where}: "${label}" -> ${url}`);
+    console.log('  Point them at real pages, or remove them, in content/data/navigation.json.');
+  }
+  console.log('');
+
+  return { written, model };
+}
+
+try {
+  build();
+} catch (error) {
+  console.error(`\n  Build failed: ${error.message}\n`);
+  if (process.env.DEBUG) console.error(error);
+  process.exit(1);
+}

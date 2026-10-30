@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Site — Tailwind source
+   Compiled to assets/css/main.css by the build. Never edit that file.
+
+   There is no design system here. Each page designs itself with Tailwind
+   utilities (any of them: the stock palette, arbitrary values, gradients,
+   shadows, animations) and, when it needs more, its own <style> block. This
+   file only loads Tailwind, sets the site's font and accent colour (used by
+   the header, the footer and any page that wants them), and holds the few
+   rules that keep every page usable. See TAILWIND-GUIDELINES.md.
+   ========================================================================== */
+
+@import "tailwindcss" source(none);
+@plugin "@tailwindcss/typography";
+
+/* Explicit sources beat auto-detection here: dist/ is generated output and
+   scanning it would keep deleted classes alive in the bundle. */
+@source "../templates";
+@source "../content";
+@source "../assets/js";
+
+/* The site's identity: one font and one accent colour. Change them freely.
+   Pages use them as font-sans (the default) and bg-brand, text-brand… */
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-brand: #0f766e;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    @apply bg-white text-zinc-700 antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+}
+
+/* Markdown tables are wrapped in .table-scroll by the renderer, so a wide one
+   scrolls instead of pushing the page sideways on a phone. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* Pages may animate; people who ask their system for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

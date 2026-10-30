@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-label="Sourdough starter in a glass jar beside flour">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe6d6"/><stop offset="1" stop-color="#d8c4a4"/></linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <rect y="460" width="1200" height="140" fill="#b88a5e"/>
+  <rect y="460" width="1200" height="10" fill="#d1a77a"/>
+  <!-- jar -->
+  <ellipse cx="520" cy="465" rx="140" ry="18" fill="#5a3825" opacity=".25"/>
+  <rect x="390" y="150" width="260" height="310" rx="40" fill="#ffffff" opacity=".45" stroke="#fff" stroke-width="6"/>
+  <rect x="410" y="120" width="220" height="40" rx="8" fill="#8a9a5b"/>
+  <path d="M398 300 h244 v120 q0 32 -32 32 h-180 q-32 0 -32 -32z" fill="#f4e7c8"/>
+  <path d="M398 300 q30 -30 60 -6 q30 20 60 -10 q30 -26 60 0 q30 22 64 -2 v20 h-244z" fill="#fbf2dc"/>
+  <g fill="#e2cfa3"><circle cx="440" cy="350" r="9"/><circle cx="500" cy="380" r="6"/><circle cx="570" cy="340" r="10"/><circle cx="610" cy="400" r="7"/><circle cx="470" cy="420" r="8"/><circle cx="540" cy="420" r="5"/></g>
+  <path d="M420 200 v60" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".7"/>
+  <rect x="660" y="300" width="4" height="0"/>
+  <!-- rubber band marker -->
+  <rect x="392" y="296" width="256" height="8" fill="#e8a598"/>
+  <!-- flour sack -->
+  <path d="M760 460 q-20 -150 30 -220 l120 0 q50 70 30 220z" fill="#f7f0e2"/>
+  <path d="M790 240 q60 -30 120 0" fill="none" stroke="#c9b49a" stroke-width="6"/>
+  <text x="850" y="370" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#a87a50">FLOUR</text>
+  <!-- spill -->
+  <ellipse cx="980" cy="470" rx="90" ry="10" fill="#fbf7ee"/>
+  <!-- wheat -->
+  <g stroke="#b88a3f" stroke-width="4" fill="#e3b866" transform="translate(-860 -60)">
+    <path d="M1060 520 L1000 260" fill="none"/>
+    <ellipse cx="1008" cy="290" rx="9" ry="20" transform="rotate(-30 1008 290)"/>
+    <ellipse cx="998" cy="320" rx="9" ry="20" transform="rotate(30 998 320)"/>
+    <ellipse cx="1020" cy="348" rx="9" ry="20" transform="rotate(-30 1020 348)"/>
+    <ellipse cx="1010" cy="376" rx="9" ry="20" transform="rotate(30 1010 376)"/>
+  </g>
+</svg>
