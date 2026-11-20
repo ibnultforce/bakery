@@ -323,6 +323,8 @@ export function renderMarkdown(source) {
 /** A body without template syntax, HTML comments or tags: bodies are often HTML. */
 function plainBody(markdown) {
   return String(markdown || '')
+    // Before the tags go: what's inside these is code or data, not words a visitor reads.
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
     .replace(/\{\{[\s\S]*?\}\}/g, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<\/?[a-zA-Z][^>]*>/g, ' ')

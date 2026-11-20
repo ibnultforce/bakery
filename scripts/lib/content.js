@@ -103,6 +103,25 @@ export function unclosedRawText(html, { markdown = false } = {}) {
   return null;
 }
 
+/** One page however it's written: /about, /about/ and /about.html; /index.html is /. */
+export function sameAddress(url) {
+  const bare = String(url).trim().toLowerCase().replace(/(^|\/)index\.html?$/, '$1').replace(/\.html?$/, '').replace(/\/+$/, '');
+  return bare || '/';
+}
+
+/**
+ * The code content/data/scripts.json puts on this page, in that place (`head`, or `body`: the end
+ * of the page). build.js gives it to base.html only for a published site, not for a preview.
+ */
+export function pageScripts(scripts, url, place) {
+  const items = Array.isArray(scripts?.items) ? scripts.items : [];
+  return items
+    .filter((item) => item?.on === true && item.place === place && typeof item.code === 'string')
+    .filter((item) => item.pages === 'all' || (Array.isArray(item.pages) && item.pages.some((page) => sameAddress(page) === sameAddress(url))))
+    .map((item) => item.code)
+    .join('\n');
+}
+
 export function markActive(items, currentUrl) {
   return items.map((item) => {
     const children = item.children ? markActive(item.children, currentUrl) : [];

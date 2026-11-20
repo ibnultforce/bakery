@@ -48,7 +48,7 @@ export function findChrome() {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Starts the browser and returns a small DevTools client for one page. */
-async function launch(executable) {
+export async function launch(executable) {
   const userDir = fs.mkdtempSync(path.join(os.tmpdir(), 'twinstack-render-'));
   const port = 9400 + Math.floor(Math.random() * 500);
   const browser = spawn(executable, [

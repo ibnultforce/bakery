@@ -55,6 +55,11 @@
  *   node scripts/edit-page.js --list                    show the queue, run nothing
  *
  * Options for a single edit:
+ *   --reference=<path>       a screenshot or mockup of the design the page should
+ *                            have (at most 2; PNG, JPEG, GIF or WebP, up to 5 MB):
+ *                            Claude replicates its layout, colours and type, and
+ *                            never puts the picture itself on the page. Any file
+ *                            inside the repo, .git included.
  *   --image=<path|url>       an image Claude should see and may place in the
  *                            page; repeat for several. A path is a file in this
  *                            repo (e.g. assets/img/uploads/team.jpg, shown on
@@ -94,6 +99,7 @@ import { ROOT, readJson, loadSite, unclosedRawText } from './lib/content.js';
 import { parseFrontmatter, renderMarkdown } from './lib/markdown.js';
 import { TemplateEngine } from './lib/template.js';
 import { renderCheck, scriptCheck } from './lib/render-check.js';
+import { screenshotProposal } from './lib/design-review.js';
 import { PAGE_MAX_TOKENS, bannedPhraseWarnings, requestClaude, resolveImages, stripFence } from './lib/claude-writer.js';
 import { knowledgePrompt, recordWork, summarizeChange } from './lib/knowledge.js';
 import { BLANK_LAYOUT_RULES, DESIGN_RULES, isDesigned, layoutShowsTitle, styleReference } from './lib/design-rules.js';
@@ -147,6 +153,9 @@ const positional = argv.filter((a) => !a.startsWith('--'));
 const dryRun = Boolean(flag('dry-run'));
 const generateFlag = Boolean(flag('generate'));
 const imageArgs = argv.filter((a) => a.startsWith('--image=')).map((a) => a.slice('--image='.length));
+// Screenshots of a design to replicate (--reference=<file>, repeatable, at most 2): shown to Claude
+// as the look to build, never placed on the page. The Twinstack web app keeps them inside .git.
+const referenceArgs = argv.filter((a) => a.startsWith('--reference=')).map((a) => a.slice('--reference='.length));
 const proposalOut = flag('proposal-out');
 const fromHtml = flag('from-html');
 // A conversion keeps the page's own HTML and CSS unless --markdown asks for it to be rewritten in
@@ -161,6 +170,10 @@ const noRenderCheck = Boolean(flag('no-render-check'));
 // copied as they are, on every page (buildChrome). Without these the site keeps its own.
 const withHeaderFlag = Boolean(flag('with-header'));
 const withFooterFlag = Boolean(flag('with-footer'));
+// The owner's choice for this page alone: --own-chrome keeps its header and footer on it, without the
+// site's, and --site-chrome always gives it the site's. Without either, ownChrome decides.
+const ownChromeFlag = Boolean(flag('own-chrome'));
+const siteChromeFlag = Boolean(flag('site-chrome'));
 
 const site = readJson(path.join(ROOT, 'site.config.json'));
 // The Twinstack web app passes the account's chosen model; run by hand, the site's own setting.
@@ -173,10 +186,18 @@ const FAST_MODEL = process.env.TWINSTACK_FAST_MODEL || '';
 // to CLAUDE_MODEL, `small` (wording, facts, removals, a one-property tweak) may go to FAST_MODEL
 // even without a design to follow. Unset or `standard`, pageModel's own rules decide.
 const TASK_SIZE = ['small', 'standard', 'complex'].includes(process.env.TWINSTACK_TASK_SIZE) ? process.env.TWINSTACK_TASK_SIZE : '';
-// How hard Claude thinks before writing a page or the header and footer. The Twinstack web app
-// passes `medium` for a site's first homepage and first header and footer, which would otherwise
-// spend minutes thinking; everything else stays at `high`.
+// How hard Claude thinks before writing a page or the header and footer (default `high`). The
+// Twinstack web app may pass a lower one to trade quality for speed.
 const EFFORT = ['low', 'medium', 'high'].includes(process.env.TWINSTACK_EFFORT) ? process.env.TWINSTACK_EFFORT : 'high';
+// How many times Claude looks at screenshots of the page it wrote and improves it (reviewDesign),
+// 0–3: TWINSTACK_DESIGN_REVIEW (the Twinstack web app sets it for a site's first homepage and new
+// pages) or --design-review=<n>. Needs Chrome or Chromium and Node 22+, else it's skipped.
+// The model that reviews (the Twinstack web app passes Sonnet: it reads screenshots well at half
+// Opus's price), else CLAUDE_MODEL, at medium effort: it fixes, it doesn't design from scratch.
+const REVIEW_MODEL = process.env.TWINSTACK_REVIEW_MODEL || CLAUDE_MODEL;
+const REVIEW_EFFORT = 'medium';
+const reviewFlag = flag('design-review');
+const REVIEW_ROUNDS = Math.max(0, Math.min(3, Number.parseInt(reviewFlag === true ? '2' : reviewFlag ?? process.env.TWINSTACK_DESIGN_REVIEW ?? '0', 10) || 0));
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
 /* ------------------------------------------------------------------ queue */
@@ -842,7 +863,8 @@ function siteImage(src, base = null) {
   const value = src.startsWith('//') ? `https:${src}` : src;
   if (/^https?:\/\//i.test(value)) return value;
   const relative = path.posix.normalize(value.split(/[?#]/)[0].replace(/^\/+/, '').replace(/^\.\//, ''));
-  if (!relative.startsWith('../') && relative.split('/')[0] !== '.git' && fs.existsSync(path.join(ROOT, relative))) return `/${relative}`;
+  // A file in static/ is published at the site's root, so that's the same address.
+  if (!relative.startsWith('../') && relative.split('/')[0] !== '.git' && (fs.existsSync(path.join(ROOT, relative)) || fs.existsSync(path.join(ROOT, 'static', relative)))) return `/${relative}`;
   return absoluteUrl(value, base);
 }
 
@@ -879,7 +901,7 @@ function absoluteInlineStyles(markup, base) {
 }
 
 /** Whether a root-relative path is a file in this repo. */
-const inRepo = (ref) => ref.startsWith('/') && !ref.startsWith('//') && fs.existsSync(path.join(ROOT, ref.split(/[?#]/)[0].slice(1)));
+const inRepo = (ref) => ref.startsWith('/') && !ref.startsWith('//') && [ROOT, path.join(ROOT, 'static')].some((dir) => fs.existsSync(path.join(dir, ref.split(/[?#]/)[0].slice(1))));
 
 /**
  * Downloads a stylesheet the page links from another server (a CDN's icon
@@ -1029,7 +1051,7 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
   const { file, html } = readHtmlSource(source);
   let page = cleanHtml(html, { keepStyles: true, prefix: IMPORT_PREFIX });
   // A page whose own header or footer isn't the one the site copied keeps its own (see ownChrome).
-  const own = chromeWanted.header || chromeWanted.footer ? null : ownChrome(page);
+  const own = chromeWanted.header || chromeWanted.footer || siteChromeFlag ? null : ownChromeFlag ? 'choice' : ownChrome(page);
   if (own) page = cleanHtml(html, { keepStyles: true, prefix: IMPORT_PREFIX, keepChrome: true });
   if (!page.text && !/<(img|svg)\b/i.test(page.html)) throw new Error(`${file} has no content left once its header and footer are removed`);
   // Where the page was published: its relative images, scripts and stylesheets are still there.
@@ -1118,7 +1140,8 @@ async function buildStyledPage(source, cssFiles, relFile, jsFiles = [], chromeWa
   if (!scoped.rules) warnings.push("no CSS rules apply to this page's content, so it will show with browser default styles");
   if (scoped.css.length > MAX_IMPORTED_CSS) throw new Error(`the page's CSS is over ${MAX_IMPORTED_CSS / 1024} KB even after unused rules are removed`);
   if (page.removed.length) warnings.push(`removed from the HTML: ${page.removed.join(', ')}`);
-  if (own) warnings.push(`kept the page as it was, without the site's header and footer: its ${own} doesn't match the ones the site copied from ${ownChromeSource() ?? 'another page'}`);
+  if (own === 'choice') warnings.push("kept the page's own header and footer, as asked, without the site's");
+  else if (own) warnings.push(`kept the page as it was, without the site's header and footer: its ${own} doesn't match the ones the site copied from ${ownChromeSource() ?? 'another page'}`);
 
   // The page's own header and footer, copied as the site's (--with-header / --with-footer).
   const chrome = chromeWanted.header || chromeWanted.footer
@@ -1796,15 +1819,67 @@ function limitVision(images) {
   });
 }
 
-/** Text-only prompts stay a string; with images, each one is labelled and sent as vision input. */
+/**
+ * The --reference screenshots as vision input: inside the repo (.git included, where the web app
+ * keeps them), a PNG, JPEG, GIF or WebP by its first bytes, at most 2 of up to 5 MB each.
+ */
+function loadReferences(list) {
+  const out = [];
+  for (const entry of list.slice(0, 2)) {
+    const absolute = path.resolve(ROOT, entry);
+    if (!absolute.startsWith(ROOT + path.sep)) {
+      console.log(`  ! design reference "${entry}" — outside the site's files, skipped`);
+      continue;
+    }
+    if (!fs.existsSync(absolute)) {
+      console.log(`  ! design reference "${entry}" — file not found, skipped`);
+      continue;
+    }
+    const bytes = fs.readFileSync(absolute);
+    const type =
+      bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
+        ? 'image/png'
+        : bytes[0] === 0xff && bytes[1] === 0xd8
+          ? 'image/jpeg'
+          : bytes.subarray(0, 3).toString('latin1') === 'GIF'
+            ? 'image/gif'
+            : bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP'
+              ? 'image/webp'
+              : null;
+    if (!type || bytes.length > 5 * 1024 * 1024) {
+      console.log(`  ! design reference "${entry}" — ${type ? 'over 5 MB' : "not a PNG, JPEG, GIF or WebP"}, skipped`);
+      continue;
+    }
+    out.push({ ref: entry, block: { type: 'image', source: { type: 'base64', media_type: type, data: bytes.toString('base64') } } });
+  }
+  return out;
+}
+
+const REFERENCES = loadReferences(referenceArgs);
+
+// What a design reference asks for. It overrides the site's own look and the design rules' freedom
+// to choose one; the responsive and accessibility rules still hold.
+const REFERENCE_NOTE = `
+
+DESIGN REFERENCE: the images labelled "Design reference" are screenshots of the design the owner wants for this page, and they asked for it to be followed exactly. Replicate it as closely as you can:
+- the same sections in the same order, with the same layout, proportions and alignment;
+- the same colours (sample them from the screenshot: backgrounds, text, accents, buttons, borders);
+- the closest Google Font to each typeface, with the same sizes, weights, italics and letter spacing;
+- the same buttons, cards, icons, dividers, shadows, corner radii, spacing and decorative details.
+This overrides matching the site's other pages and any choice of your own about the look. Use the page's own words and facts where the screenshot shows text that isn't the owner's; where it shows a section the page has no content for, keep the section with clearly marked [sample] content. Where it shows photos, use the images you're given, or a placeholder block of the same size and shape. Never put the screenshot itself on the page. It must still work on phones: stack the same sections in the same order.`;
+
+/** Text-only prompts stay a string; with images or a design reference, each is labelled and sent as vision input. */
 function userContent(userPrompt, images) {
   const shown = images.filter((image) => image.block);
-  if (!shown.length) return userPrompt;
+  if (!shown.length && !REFERENCES.length) return userPrompt;
   const blocks = [];
+  REFERENCES.forEach((reference, i) => {
+    blocks.push({ type: 'text', text: `Design reference ${i + 1}: a screenshot of the design to replicate. It is not an image for the page.` }, reference.block);
+  });
   images.forEach((image, i) => {
     if (image.block) blocks.push({ type: 'text', text: `Image ${i + 1}: ${image.ref}` }, image.block);
   });
-  return [...blocks, { type: 'text', text: userPrompt }];
+  return [...blocks, { type: 'text', text: REFERENCES.length ? `${userPrompt}${REFERENCE_NOTE}` : userPrompt }];
 }
 
 /**
@@ -1850,6 +1925,8 @@ const SEARCH_FIELD_LABELS = { metaTitle: 'search title', metaDescription: 'searc
  */
 function pageModel(relFile, mode, images, original) {
   if (!FAST_MODEL || FAST_MODEL === CLAUDE_MODEL) return CLAUDE_MODEL;
+  // Copying a design from a screenshot is the most demanding page work there is.
+  if (REFERENCES.length) return CLAUDE_MODEL;
   if (!relFile.startsWith('content/') || !relFile.endsWith('.md')) return CLAUDE_MODEL;
   if (images.some((image) => image.block && image.block.source.type !== 'base64')) return CLAUDE_MODEL;
   // A conversion follows the HTML page it's given: its content and structure are all there.
@@ -1889,6 +1966,146 @@ async function askClaude(buildPrompts, images, { cache = false, model = CLAUDE_M
     );
     return { ...(await call(fallback)), images: fallback };
   }
+}
+
+/* ---------------------------------------------------------- design review */
+
+const REVIEW_ASK = `Above are screenshots of the page you just wrote, built into the site and opened in a browser: one screen at a time, top to bottom, at each width. The site's header and footer around it are designed separately, so judge only the page between them, and never add a header, menu or footer to it.
+
+Look at it the way a demanding senior designer would before showing it to the client, and be honest: the first version is rarely the best one. Check:
+- The first screen: does it make a strong, specific impression for this business and say at once what it does and what to do next?
+- Hierarchy and type: a confident heading scale, readable text, nothing too small, too faint or too crowded.
+- Spacing and alignment: even rhythm between sections, consistent gutters, nothing cramped or floating in empty space.
+- Variety: does each section have its own layout, or does the page repeat itself or look like a generic template?
+- Colour, depth and contrast: does it feel finished and polished, with enough contrast everywhere?
+- Images: well sized and cropped, placed where they help.
+- Anything broken: overlapping or cut-off text, horizontal scrolling, invisible text, awkward wrapping, squashed columns or misaligned grids, especially on the phone.
+- Length: visitors on a phone stop scrolling. If the page is more than about 8 phone screens long, tighten vertical spacing and trim repetition to bring it nearer that, without dropping anything the request asked for.
+- Facts: sample people (names, photos of staff), opening hours, prices, addresses or phone numbers the request didn't give must not be on the page; take them out.
+
+Then fix what's weak. Keep the page's content, facts, links and images, and everything the request asked for; don't add images you weren't given.
+
+Don't write the page again: reply with targeted fixes to the file you wrote, in exactly this format:
+===== REVIEW =====
+- up to 6 short points, each one thing you fixed and why
+===== FIXES =====
+<<<<<<< FIND
+an exact, unique piece of the file as it is now (a few whole lines, copied character for character)
+=======
+what replaces it
+>>>>>>> REPLACE
+
+Repeat the FIND/REPLACE block for each fix (up to 15). Each FIND must match the file exactly once; keep the blocks small, but a whole section may be replaced when it needs a new layout.
+
+If the page is already excellent and you'd change nothing, reply with only the words NO CHANGES.`;
+
+const REVIEW_REPLY = /=====\s*REVIEW\s*=====\s*([\s\S]*?)=====\s*FIXES\s*=====\s*([\s\S]*)$/;
+const FIX_BLOCK = /<<<<<<< FIND\r?\n([\s\S]*?)\r?\n=======\r?\n([\s\S]*?)>>>>>>> REPLACE/g;
+const MAX_FIXES = 15;
+
+/**
+ * `text` with the review's FIND/REPLACE fixes applied in order. A fix whose FIND isn't in the text
+ * exactly once is skipped. Resolves to { text, applied, skipped }.
+ */
+function applyFixes(text, fixesText) {
+  let out = text;
+  let applied = 0;
+  let skipped = 0;
+  for (const [, find, replacement] of [...fixesText.matchAll(FIX_BLOCK)].slice(0, MAX_FIXES)) {
+    const at = find ? out.indexOf(find) : -1;
+    if (at < 0 || out.indexOf(find, at + 1) >= 0) {
+      skipped++;
+      continue;
+    }
+    out = out.slice(0, at) + replacement.replace(/\r?\n$/, '') + out.slice(at + find.length);
+    applied++;
+  }
+  return { text: out, applied, skipped };
+}
+const SHOWN_EARLIER = 'Screenshots of an earlier version, no longer shown.';
+
+/** The screenshots as content blocks, each width under a line saying what it is. */
+function screenshotBlocks(screens) {
+  const blocks = [];
+  for (const screen of screens) {
+    blocks.push({ type: 'text', text: `${screen.shots.length} screen${screen.shots.length === 1 ? '' : 's'} on ${screen.label}, top to bottom (the page is ${screen.pageHeight} px tall there, about ${Math.max(1, Math.round(screen.pageHeight / screen.height))} screens):` });
+    for (const shot of screen.shots) blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: shot.data } });
+  }
+  return [...blocks, { type: 'text', text: REVIEW_ASK }];
+}
+
+/**
+ * Claude looks at the page it wrote and improves it, up to REVIEW_ROUNDS times: the site is built
+ * with the page in place, photographed at a computer's and a phone's width (lib/design-review.js),
+ * and the screenshots go back to REVIEW_MODEL in the same conversation as the first request. It
+ * answers with targeted FIND/REPLACE fixes (far fewer tokens than the whole page again). The fixed
+ * page must pass the same checks as the first reply, or it's left out and the last good version
+ * stays. Never fails the change: anything that goes wrong ends the review with a warning.
+ * Resolves to { raw, checks, warnings } (`warnings` null when the first version was kept).
+ */
+async function reviewDesign({ relFile, mode, original, raw, reply, buildPrompts, isContent }) {
+  const checks = [];
+  const notes = [];
+  let warnings = null;
+  let current = raw;
+  const { systemPrompt, userPrompt } = buildPrompts(reply.images);
+  const messages = [{ role: 'user', content: userContent(userPrompt, reply.images) }, { role: 'assistant', content: reply.text }];
+  for (let round = 1; round <= REVIEW_ROUNDS; round++) {
+    console.log(`  Looking at the page in a browser (review ${round} of ${REVIEW_ROUNDS})…`);
+    const shots = await screenshotProposal({ file: relFile, content: current, files: [] });
+    if (!shots.ran) {
+      console.log(`  ! Couldn't look at the page: ${shots.reason}`);
+      notes.push(`the page couldn't be looked at in a browser (${shots.reason})`);
+      break;
+    }
+    // Only the latest screenshots are shown: earlier ones become a line of text.
+    for (const message of messages) {
+      if (message.role === 'user' && Array.isArray(message.content) && message.content.some((b) => b.text === REVIEW_ASK)) message.content = SHOWN_EARLIER;
+    }
+    messages.push({ role: 'user', content: screenshotBlocks(shots.screens) });
+    let answer;
+    try {
+      answer = await requestClaude({ apiKey, model: REVIEW_MODEL, systemPrompt, messages, maxTokens: MAX_TOKENS, effort: REVIEW_EFFORT, cache: REVIEW_ROUNDS > 1 });
+    } catch (error) {
+      console.log(`  ! The review failed: ${error.message.slice(0, 200)}`);
+      notes.push(`the design review stopped early (${error.status === 402 ? 'no Claude credits left' : error.message.slice(0, 120)})`);
+      break;
+    }
+    if (answer.stopReason === 'refusal' || answer.stopReason === 'max_tokens') {
+      notes.push(`the design review's version was left out (${answer.stopReason === 'refusal' ? 'declined' : 'cut off'})`);
+      break;
+    }
+    if (/^\s*NO CHANGES\s*\.?\s*$/i.test(answer.text)) {
+      console.log('  Claude looked at the page and changed nothing.');
+      checks.push(`Looked at in a browser on a computer and a phone${round > 1 ? ' again' : ''}: nothing more to improve`);
+      break;
+    }
+    const parts = answer.text.match(REVIEW_REPLY);
+    if (!parts) {
+      notes.push("the design review's reply wasn't in the expected form, so the previous version was kept");
+      break;
+    }
+    const fixed = applyFixes(current, parts[2]);
+    if (!fixed.applied) {
+      notes.push(`none of the design review's fixes matched the page${fixed.skipped ? ` (${fixed.skipped} skipped)` : ''}, so it was kept as it was`);
+      break;
+    }
+    if (fixed.skipped) console.log(`  ! review ${round}: ${fixed.skipped} fix${fixed.skipped === 1 ? '' : 'es'} didn't match the page and were skipped`);
+    const candidate = fixed.text;
+    const checked = mode === 'generate' ? generateChecks(original, candidate, reply.images, relFile) : editChecks(original, candidate, isContent);
+    if (checked.problems.length) {
+      for (const problem of checked.problems) console.log(`  ! review ${round}: ${problem}`);
+      notes.push(`the design review's version ${round} didn't pass the checks, so the previous version was kept`);
+      break;
+    }
+    const changes = parts[1].split('\n').map((line) => line.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean).slice(0, 6);
+    for (const change of changes) console.log(`  · ${change}`);
+    checks.push(`Looked at in a browser on a computer and a phone by ${REVIEW_MODEL} (review ${round}) and improved: ${changes.join('; ') || 'the design'}`);
+    current = candidate;
+    warnings = checked.warnings;
+    messages.push({ role: 'assistant', content: answer.text });
+  }
+  return { raw: current, checks, warnings: warnings && [...warnings, ...notes], notes };
 }
 
 /* ----------------------------------------------------------------- checks */
@@ -2389,6 +2606,7 @@ async function applyEdit(relFile, instruction, imageEntries = [], mode = 'edit',
   for (const [i, image] of images.entries()) {
     console.log(`  Image ${i + 1}: ${image.ref}${image.block ? '' : ` (reference only: ${image.why || 'not readable'})`}`);
   }
+  for (const [i, reference] of REFERENCES.entries()) console.log(`  Design reference ${i + 1}: ${reference.ref} (the design to replicate)`);
 
   const layout = generate || convert ? layoutFor(relFile, parseFrontmatter(base).data) : null;
   // A page that shows shared data (the homepage's sections) is edited together with that data.
@@ -2411,10 +2629,14 @@ async function applyEdit(relFile, instruction, imageEntries = [], mode = 'edit',
     return false;
   }
 
+  // A page Claude designs on its own (not one built from shared data or brought in from HTML) can
+  // be looked at in a browser and improved afterwards (reviewDesign).
+  const reviewing = REVIEW_ROUNDS > 0 && !multi && !convert && relFile.startsWith('content/') && relFile.endsWith('.md');
+
   // One request and the checks on its reply.
   const attempt = async (useModel) => {
-    // A conversion is always reviewed, and the review resends this whole request.
-    const reply = await askClaude(buildPrompts, images, { cache: Boolean(convert), model: useModel });
+    // A conversion is always reviewed, and so is a design review's page: each resends this request.
+    const reply = await askClaude(buildPrompts, images, { cache: Boolean(convert) || (reviewing && useModel === REVIEW_MODEL), model: useModel });
     if (reply.stopReason === 'refusal') return { reply };
     // Content files are taken from their frontmatter on; a template or other file is the whole reply.
     let raw = generate || convert ? fileFromReply(reply.text) : stripFence(reply.text);
@@ -2480,6 +2702,13 @@ async function applyEdit(relFile, instruction, imageEntries = [], mode = 'edit',
   let { raw, warnings, checks } = result;
   if (fellBack) checks = [...checks, fellBack];
   else if (model !== CLAUDE_MODEL) checks = [...checks, `Written by ${model}, following the site's existing design, and passed the checks`];
+
+  if (reviewing && !problems.length) {
+    const review = await reviewDesign({ relFile, mode, original, raw, reply, buildPrompts, isContent });
+    raw = review.raw;
+    checks = [...checks, ...review.checks];
+    warnings = review.warnings ?? [...warnings, ...review.notes];
+  }
 
   // A page's first real content (its skeleton or draft written, an HTML page brought in) makes it
   // a new page, which gets its search text. Later edits leave the search text to the owner.
@@ -2821,8 +3050,9 @@ if (flag('chrome')) {
   const usable =
     (mode === 'edit' ? Boolean(instruction) : mode === 'generate' ? fromHtml === undefined : typeof fromHtml === 'string') &&
     ((!markdownFlag && !flag('keep-styles') && !cssArgs.length) || mode === 'convert') &&
-    !(markdownFlag && (cssArgs.length || jsArgs.length || withHeaderFlag || withFooterFlag)) &&
-    (mode === 'convert' || (!jsArgs.length && !withHeaderFlag && !withFooterFlag));
+    !(markdownFlag && (cssArgs.length || jsArgs.length || withHeaderFlag || withFooterFlag || ownChromeFlag || siteChromeFlag)) &&
+    !(ownChromeFlag && (siteChromeFlag || withHeaderFlag || withFooterFlag)) &&
+    (mode === 'convert' || (!jsArgs.length && !withHeaderFlag && !withFooterFlag && !ownChromeFlag && !siteChromeFlag));
   if (!usable) {
     console.error(`
   Usage:
@@ -2831,6 +3061,7 @@ if (flag('chrome')) {
     node scripts/edit-page.js <page> --from-html=<file.html> [--css=<file.css>...] ["<direction>"]
                                                               copy an existing HTML page in, as it is, with its own CSS
       add --with-header and/or --with-footer to make the page's own header and footer the site's, copied as they are
+      add --own-chrome to keep them on this page only, or --site-chrome to give it the site's
     node scripts/edit-page.js <page> --from-html=<file.html> --markdown ["<direction>"]
                                                               rewrite it as markdown in the site's design instead
     node scripts/edit-page.js --chrome ["<direction>"]        design the header and footer (shown on every page)

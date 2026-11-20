@@ -20,18 +20,17 @@
               group-data-[style=floating]/header:group-data-[transparent=true]/header:group-data-[scrolled=false]/header:bg-transparent
               group-data-[style=floating]/header:group-data-[transparent=true]/header:group-data-[scrolled=false]/header:shadow-none
               group-data-[style=floating]/header:group-data-[transparent=true]/header:group-data-[scrolled=false]/header:backdrop-blur-none">
-    <a href="/" class="inline-flex shrink-0 items-center gap-2.5 text-[1.05rem] font-semibold tracking-tight text-zinc-950 no-underline group-data-[tone=dark]/header:text-white">
+    <a href="/" class="inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl text-[1.08rem] font-bold tracking-tight text-zinc-950 no-underline transition-opacity hover:opacity-80 group-data-[tone=dark]/header:text-white">
       {{# if nav.appearance.header.logo }}<img src="{{ nav.appearance.header.logo }}" alt="{{ site.brand.logoText }}" class="block h-8 w-auto max-w-52 object-contain">{{ else }}
-      <img src="{{ site.brand.logoMark }}" alt="" width="28" height="28" class="size-7 rounded-lg">
+      {{# if site.brand.logoMark }}<img src="{{ site.brand.logoMark }}" alt="" width="32" height="32" class="size-8 rounded-[0.6rem] shadow-sm shadow-brand/30 ring-1 ring-black/5">{{/ if }}
       {{ site.brand.logoText }}{{/ if }}
     </a>
 
     <button type="button" data-nav-toggle aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"
-            class="ml-auto inline-flex size-10 flex-col items-center justify-center gap-1 rounded-full border border-zinc-200 bg-white/70 transition hover:bg-zinc-100
+            class="group/toggle ml-auto inline-flex size-11 flex-col items-center justify-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/80 shadow-sm shadow-zinc-950/5 transition hover:bg-zinc-100
                    group-data-[tone=dark]/header:border-white/20 group-data-[tone=dark]/header:bg-white/5 group-data-[tone=dark]/header:hover:bg-white/10 lg:hidden">
-      <span class="block h-0.5 w-4 rounded-full bg-zinc-900 group-data-[tone=dark]/header:bg-white"></span>
-      <span class="block h-0.5 w-4 rounded-full bg-zinc-900 group-data-[tone=dark]/header:bg-white"></span>
-      <span class="block h-0.5 w-4 rounded-full bg-zinc-900 group-data-[tone=dark]/header:bg-white"></span>
+      <span class="block h-0.5 w-5 rounded-full bg-zinc-900 transition-transform duration-300 group-aria-expanded/toggle:translate-y-1 group-aria-expanded/toggle:rotate-45 group-data-[tone=dark]/header:bg-white"></span>
+      <span class="block h-0.5 w-5 rounded-full bg-zinc-900 transition-transform duration-300 group-aria-expanded/toggle:-translate-y-1 group-aria-expanded/toggle:-rotate-45 group-data-[tone=dark]/header:bg-white"></span>
     </button>
 
     <nav id="primary-nav" data-open="false" aria-label="Primary"
@@ -39,8 +38,8 @@
                 max-lg:absolute max-lg:inset-x-0 max-lg:top-full max-lg:max-h-[calc(100dvh-4rem)]
                 max-lg:group-data-[style=floating]/header:inset-x-3 max-lg:group-data-[style=floating]/header:mt-2
                 max-lg:group-data-[style=floating]/header:rounded-2xl max-lg:group-data-[style=floating]/header:border sm:max-lg:group-data-[style=floating]/header:inset-x-5
-                max-lg:overflow-y-auto max-lg:border-b max-lg:border-zinc-200 max-lg:bg-white max-lg:px-5
-                max-lg:pb-8 max-lg:pt-2 max-lg:shadow-xl max-lg:shadow-zinc-950/5 max-lg:data-[open=false]:hidden
+                max-lg:overflow-y-auto max-lg:rounded-b-3xl max-lg:border-b max-lg:border-zinc-200 max-lg:bg-white max-lg:px-6
+                max-lg:pb-8 max-lg:pt-3 max-lg:shadow-2xl max-lg:shadow-zinc-950/10 max-lg:backdrop-blur-xl max-lg:data-[open=false]:hidden
                 max-lg:group-data-[theme=brand]/header:border-white/10 max-lg:group-data-[theme=brand]/header:bg-brand
                 max-lg:group-data-[theme=dark]/header:border-white/10 max-lg:group-data-[theme=dark]/header:bg-zinc-950">
       <ul class="flex items-center gap-1 max-lg:flex-col max-lg:items-stretch max-lg:gap-0">
@@ -48,13 +47,13 @@
         <li class="group relative lg:group-data-[layout=center]/header:first:ml-auto">
           {{# if url }}<a href="{{ url }}"{{{ ariaCurrent }}}{{ else }}<button type="button" aria-haspopup="true"{{/ if }}
              class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium
-                    text-zinc-600 no-underline transition-colors hover:bg-zinc-100 hover:text-zinc-950
-                    aria-[current=page]:bg-zinc-100 aria-[current=page]:text-zinc-950
+                    text-zinc-600 no-underline transition-colors hover:bg-zinc-100/80 hover:text-zinc-950
+                    aria-[current=page]:bg-brand/10 aria-[current=page]:text-brand
                     group-data-[tone=dark]/header:text-white/75 group-data-[tone=dark]/header:hover:bg-white/10
                     group-data-[tone=dark]/header:hover:text-white group-data-[tone=dark]/header:aria-[current=page]:bg-white/10
                     group-data-[tone=dark]/header:aria-[current=page]:text-white
-                    max-lg:flex max-lg:w-full max-lg:rounded-none max-lg:border-b max-lg:border-zinc-100 max-lg:px-0 max-lg:py-3.5
-                    max-lg:text-base max-lg:hover:bg-transparent max-lg:aria-[current=page]:bg-transparent
+                    max-lg:flex max-lg:min-h-12 max-lg:w-full max-lg:rounded-none max-lg:border-b max-lg:border-zinc-100 max-lg:px-0 max-lg:py-3.5
+                    max-lg:text-[1.05rem] max-lg:hover:bg-transparent max-lg:aria-[current=page]:bg-transparent
                     max-lg:group-data-[tone=dark]/header:border-white/10">
             {{ label }}
             {{# if hasChildren }}<svg viewBox="0 0 10 6" aria-hidden="true" class="size-2.5 opacity-50 transition-transform group-hover:rotate-180 max-lg:hidden"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>{{/ if }}
@@ -83,9 +82,9 @@
         {{# if nav.header.cta }}
         <li class="max-lg:mt-6 lg:ml-3 lg:group-data-[layout=center]/header:ml-auto lg:group-data-[layout=left]/header:ml-auto">
           <a href="{{ nav.header.cta.url }}"
-             class="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white no-underline shadow-sm shadow-zinc-950/20 transition hover:-translate-y-px hover:bg-zinc-800 hover:shadow-md
-                    group-data-[tone=dark]/header:bg-white group-data-[tone=dark]/header:text-zinc-950 group-data-[tone=dark]/header:hover:bg-zinc-100
-                    max-lg:w-full max-lg:py-3">{{ nav.header.cta.label }}</a>
+             class="group/cta inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white no-underline shadow-md shadow-brand/25 transition hover:-translate-y-px hover:shadow-lg hover:shadow-brand/30 hover:brightness-110
+                    group-data-[tone=dark]/header:bg-white group-data-[tone=dark]/header:text-zinc-950 group-data-[tone=dark]/header:shadow-black/20 group-data-[tone=dark]/header:hover:bg-zinc-100
+                    max-lg:w-full max-lg:py-3">{{ nav.header.cta.label }}<svg viewBox="0 0 16 16" aria-hidden="true" class="size-3.5 transition-transform group-hover/cta:translate-x-0.5"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         </li>
         {{ else }}
         <li role="presentation" class="hidden lg:group-data-[layout=center]/header:block lg:ml-auto"></li>

@@ -210,6 +210,7 @@ the search index all update on the next build. Nothing else needs touching.
 | Page shell, meta tags, schema | `templates/partials/base.html` (renders `page.seo`), `scripts/lib/seo.js`, `scripts/lib/schema.js` |
 | The "page not found" page | `templates/partials/not-found.html`, which `build.js` builds as `404.html` (GitHub Pages serves it for any missing address). A page of the site's own at `url: /404.html` replaces it. Either way the page gets `notFound: true`; it isn't in the sitemap, the search index or `check.js`'s pages |
 | Visit counting | `site.config.json` → `analytics` (`endpoint`, `key`), written by the Twinstack web app when the owner turns analytics on; `base.html` then loads `assets/js/analytics.js`. Cookieless: it sends the path (without the base path), the outside referrer's host, `utm_source`/`utm_medium`/`utm_campaign`, the screen width and the time zone, plus clicks on phone, email, WhatsApp and outside links. It sends nothing on localhost, with Do Not Track or Global Privacy Control, or after `?twinstack-analytics=off`. The web app detects support by `site.analytics.key` in `base.html` and reads the event fields (`t`, `p`, `nf`, `r`, `us`, `um`, `uc`, `w`, `tz`, `k`, `h`), so keep them in step |
+| Other services' code (Google Analytics, a chat widget) | `content/data/scripts.json` → `items`: `name`, `code`, `place` (`head`, or `body`: the end of the page), `pages` (`"all"`, which includes the 404 page, or a list of addresses), `on`. `pageScripts` in `lib/content.js` picks a page's code and `build.js` hands it to `base.html` as `customHead`/`customBody`, only for a published build: `--drafts` and `--proposal` builds (the web app's previews) leave it out. `check.js` errors on a script with an unclosed tag and warns about an address that isn't a published page. The Twinstack web app edits the file on its Custom code screen and detects support by `customHead` in `base.html`. Pages kept as they are in `static/` don't go through `base.html`, so they don't get these |
 | Title format, X handle, search console verification | `site.config.json` → `seo` (see "Search engine optimisation" below) |
 | A page's structure | The page's own body. Old copies' per-type layouts in `templates/layouts/` |
 
@@ -587,8 +588,22 @@ to a cheaper `deepseek-*` model its proxy routes), and every use of it falls bac
   decide. The web app detects support by the literal `TWINSTACK_TASK_SIZE` in `edit-page.js`.
 - `TWINSTACK_EFFORT` (`low`/`medium`/`high`, default `high`) is the effort `edit-page.js` asks for
   when it writes a page (`askClaude`) or the header and footer (`applyChrome`). The web app passes
-  `medium` for a site's first homepage and first header and footer (on Claude Opus), which at
-  `high` spent most of their minutes thinking. Conversions' reviews keep `high`.
+  `medium` for a site's first homepage and first header and footer. Conversions' reviews keep
+  `high`.
+- `TWINSTACK_DESIGN_REVIEW` (0–3, or `--design-review[=<n>]`; the web app passes 1 for a site's
+  first homepage) makes `edit-page.js` look at the page it wrote (`reviewDesign`):
+  `lib/design-review.js` builds the site with the page in place (`build.js --proposal --out` into
+  `.git/twinstack-design-review/`), serves it on a loopback port and screenshots it in headless
+  Chrome, one screen at a time at 1280 and 390 px wide; the screenshots go to
+  `TWINSTACK_REVIEW_MODEL` (else `CLAUDE_MODEL`, at medium effort) in the same conversation, which
+  answers with `<<<<<<< FIND` / `=======` / `>>>>>>> REPLACE` fixes (or `NO CHANGES`); it's told how many
+  phone screens long the page is (past about 8, it tightens it) and to take out sample people, opening
+  hours, prices or contact details the request didn't give. The fixes are applied by
+  `applyFixes` (a FIND that isn't in the page exactly once is skipped). The fixed page must pass
+  the same checks as the first reply, or the last good version stays; each round is listed in the
+  proposal's `checks`. Edits of shared data
+  (multi-file) and conversions aren't reviewed. Without Chrome or Node 22+ it's skipped with a
+  warning, never a failure.
 - `edit-page.js` (`chromeModel`): every `--chrome` request, whatever the site's design and
   `TWINSTACK_TASK_SIZE` (a site with no design yet and a complex direction included);
   `CLAUDE_MODEL` only takes over when its result errors, is declined or fails the checks.
@@ -681,6 +696,11 @@ imported pages, which were made for it). The render check compares the header an
 too. The proposal carries both partials, the CSS and the scripts in `"files"`; the web app
 allows the partials only with `data-designed="copied"`, detects support by the literal
 `--with-header`, and puts the standard ones back with its header and footer installer.
+
+`--own-chrome` keeps the page's own header and footer on that page alone, without the site's (frontmatter
+`ownChrome: true`, which `base.html` reads), and `--site-chrome` always gives it the site's. Without either,
+`ownChrome` in `edit-page.js` decides. The web app asks the owner when an HTML file is uploaded on its Files
+screen, and detects support by the literal `--own-chrome`.
 
 **Edit other markdown files with Claude**
 

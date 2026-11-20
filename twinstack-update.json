@@ -11,6 +11,8 @@
     "assets/css/**",
     "assets/js/imported/**",
     "assets/img/**",
+    "assets/files/**",
+    "static/**",
     "CHANGELOG.md",
     "CNAME"
   ],

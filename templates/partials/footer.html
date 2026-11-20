@@ -1,10 +1,12 @@
 <footer data-theme="{{ nav.appearance.footer.theme }}" data-tone="{{ nav.appearance.footer.tone }}" data-layout="{{ nav.appearance.footer.layout }}"
-        class="site-footer group/footer bg-zinc-950 pb-10 pt-20 text-sm text-zinc-400 data-[layout=minimal]:pt-10
+        class="site-footer group/footer relative isolate overflow-hidden bg-zinc-950 pb-10 pt-20 text-sm text-zinc-400 data-[layout=minimal]:pt-10
                data-[theme=brand]:bg-brand data-[theme=brand]:text-white/75
                data-[theme=light]:border-t data-[theme=light]:border-zinc-200 data-[theme=light]:bg-zinc-50 data-[theme=light]:text-zinc-500">
+  <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-linear-to-r from-transparent via-brand/70 to-transparent group-data-[theme=brand]/footer:via-white/40"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute -left-24 -top-40 -z-10 size-96 rounded-full bg-brand/20 blur-3xl group-data-[theme=brand]/footer:bg-white/10 group-data-[tone=light]/footer:bg-brand/10"></div>
   <div class="mx-auto w-full max-w-7xl px-5 sm:px-8">
     {{# if nav.appearance.footer.cta }}
-    <div class="mb-16 flex flex-col gap-6 rounded-3xl bg-white/5 p-8 ring-1 ring-white/10 sm:p-10 md:flex-row md:items-center md:justify-between
+    <div class="mb-16 flex flex-col gap-6 rounded-3xl bg-linear-to-br from-brand/25 via-white/5 to-white/5 p-8 ring-1 ring-white/10 sm:p-10 md:flex-row md:items-center md:justify-between
                 group-data-[theme=brand]/footer:bg-white/10 group-data-[theme=brand]/footer:ring-white/20
                 group-data-[tone=light]/footer:bg-white group-data-[tone=light]/footer:ring-zinc-200
                 group-data-[layout=centered]/footer:items-center group-data-[layout=centered]/footer:text-center md:group-data-[layout=centered]/footer:flex-col">
@@ -13,8 +15,8 @@
         {{# if nav.appearance.footer.cta.text }}<p class="mt-2 text-base leading-relaxed">{{ nav.appearance.footer.cta.text }}</p>{{/ if }}
       </div>
       <a href="{{ nav.appearance.footer.cta.url }}"
-         class="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 no-underline transition hover:-translate-y-px hover:bg-zinc-100
-                group-data-[tone=light]/footer:bg-zinc-950 group-data-[tone=light]/footer:text-white group-data-[tone=light]/footer:hover:bg-zinc-800">{{ nav.appearance.footer.cta.label }}</a>
+         class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 no-underline shadow-lg shadow-black/20 transition hover:-translate-y-px hover:bg-zinc-100
+                group-data-[tone=light]/footer:bg-brand group-data-[tone=light]/footer:text-white group-data-[tone=light]/footer:shadow-brand/25 group-data-[tone=light]/footer:hover:brightness-110">{{ nav.appearance.footer.cta.label }}</a>
     </div>
     {{/ if }}
 
@@ -22,26 +24,26 @@
                 group-data-[layout=minimal]/footer:hidden
                 group-data-[layout=centered]/footer:flex group-data-[layout=centered]/footer:flex-col group-data-[layout=centered]/footer:items-center group-data-[layout=centered]/footer:text-center">
       <div class="flex flex-col gap-5 group-data-[layout=centered]/footer:items-center">
-        <a href="/" class="inline-flex items-center gap-2.5 text-[1.05rem] font-semibold tracking-tight text-white no-underline group-data-[tone=light]/footer:text-zinc-950">
-          {{# if nav.appearance.footer.logo }}<img src="{{ nav.appearance.footer.logo }}" alt="{{ site.brand.logoText }}" class="block h-8 w-auto max-w-52 object-contain">{{ else }}
-          <img src="{{ site.brand.logoMark }}" alt="" width="28" height="28" class="size-7 rounded-lg">
+        <a href="/" class="inline-flex min-h-11 items-center gap-2.5 text-[1.15rem] font-bold tracking-tight text-white no-underline group-data-[tone=light]/footer:text-zinc-950">
+          {{# if nav.appearance.footer.logo }}<img src="{{ nav.appearance.footer.logo }}" alt="{{ site.brand.logoText }}" class="block h-9 w-auto max-w-52 object-contain">{{ else }}
+          {{# if site.brand.logoMark }}<img src="{{ site.brand.logoMark }}" alt="" width="32" height="32" class="size-8 rounded-[0.6rem] ring-1 ring-white/10">{{/ if }}
           {{ site.brand.logoText }}{{/ if }}
         </a>
         {{# if nav.appearance.footer.showTagline }}{{# if site.footerTagline }}<p class="max-w-[36ch] leading-relaxed">{{ site.footerTagline }}{{# if site.foundedYear }} Since {{ site.foundedYear }}.{{/ if }}</p>{{/ if }}{{/ if }}
         {{# if nav.appearance.footer.showContact }}
-        <p class="flex flex-col gap-1.5 group-data-[layout=centered]/footer:items-center">
-          {{# if site.contact.email }}<a href="mailto:{{ site.contact.email }}" class="w-fit text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950">{{ site.contact.email }}</a>{{/ if }}
-          {{# if site.contact.phone }}<a href="tel:{{ site.contact.phone }}" class="w-fit text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950">{{ site.contact.phone }}</a>{{/ if }}
-          {{# if site.contact.whatsappUrl }}<a href="{{ site.contact.whatsappUrl }}" class="w-fit text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950">{{ site.contact.whatsapp }}</a>{{/ if }}
-          {{# if site.contact.address }}<span>{{ site.contact.address }}</span>{{/ if }}
-          {{# if site.contact.hours }}<span>{{ site.contact.hours }}</span>{{/ if }}
+        <p class="-my-2 flex flex-col leading-snug group-data-[layout=centered]/footer:items-center">
+          {{# if site.contact.phone }}<a href="tel:{{ site.contact.phone }}" class="flex min-h-11 w-fit items-center gap-2.5 text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950"><svg class="size-4 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>{{ site.contact.phone }}</a>{{/ if }}
+          {{# if site.contact.email }}<a href="mailto:{{ site.contact.email }}" class="flex min-h-11 w-fit items-center gap-2.5 text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950"><svg class="size-4 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>{{ site.contact.email }}</a>{{/ if }}
+          {{# if site.contact.whatsappUrl }}<a href="{{ site.contact.whatsappUrl }}" class="flex min-h-11 w-fit items-center gap-2.5 text-zinc-300 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white group-data-[tone=light]/footer:text-zinc-700 group-data-[tone=light]/footer:hover:text-zinc-950"><svg class="size-4 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.7-5A9 9 0 1 1 8 19.3z"/></svg>{{ site.contact.whatsapp }}</a>{{/ if }}
+          {{# if site.contact.address }}<span class="flex min-h-8 items-start gap-2.5 py-1"><svg class="mt-0.5 size-4 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>{{ site.contact.address }}</span>{{/ if }}
+          {{# if site.contact.hours }}<span class="flex min-h-8 items-start gap-2.5 py-1"><svg class="mt-0.5 size-4 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ site.contact.hours }}</span>{{/ if }}
         </p>
         {{/ if }}
         {{# if nav.appearance.footer.showSocial }}{{# if nav.social }}
         <ul class="flex flex-wrap gap-2" aria-label="Social media">
           {{# each nav.social }}
           <li><a href="{{ url }}" target="_blank" rel="noopener" aria-label="{{ label }}"
-                 class="inline-flex size-9 items-center justify-center rounded-full bg-white/5 text-zinc-300 no-underline transition-colors hover:bg-white/15 hover:text-white
+                 class="inline-flex size-10 items-center justify-center rounded-full bg-white/5 text-zinc-300 no-underline ring-1 ring-white/10 transition hover:-translate-y-px hover:bg-brand hover:text-white hover:ring-brand
                         group-data-[theme=brand]/footer:bg-white/10 group-data-[theme=brand]/footer:text-white
                         group-data-[tone=light]/footer:bg-zinc-200/70 group-data-[tone=light]/footer:text-zinc-600 group-data-[tone=light]/footer:hover:bg-zinc-200 group-data-[tone=light]/footer:hover:text-zinc-950"><svg viewBox="0 0 24 24" aria-hidden="true" class="size-4">{{{ svg }}}</svg></a></li>
           {{/ each }}
@@ -52,7 +54,7 @@
       <div class="contents group-data-[layout=centered]/footer:flex group-data-[layout=centered]/footer:flex-wrap group-data-[layout=centered]/footer:justify-center group-data-[layout=centered]/footer:gap-x-16 group-data-[layout=centered]/footer:gap-y-10">
         {{# each nav.footer }}
         <div>
-          <h5 class="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/90 group-data-[tone=light]/footer:text-zinc-950">{{ title }}</h5>
+          <h5 class="mb-4 text-[0.95rem] font-semibold tracking-tight text-white group-data-[tone=light]/footer:text-zinc-950">{{ title }}</h5>
           <ul class="grid gap-2.5">
             {{# each links }}
             <li><a href="{{ url }}"{{# if external }} target="_blank" rel="noopener"{{/ if }} class="text-zinc-400 no-underline transition-colors hover:text-white group-data-[theme=brand]/footer:text-white/80 group-data-[theme=brand]/footer:hover:text-white group-data-[tone=light]/footer:text-zinc-600 group-data-[tone=light]/footer:hover:text-zinc-950">{{ label }}</a></li>
@@ -69,7 +71,7 @@
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         <a href="/" class="hidden items-center gap-2 font-semibold text-white no-underline group-data-[layout=minimal]/footer:inline-flex group-data-[tone=light]/footer:text-zinc-950">
           {{# if nav.appearance.footer.logo }}<img src="{{ nav.appearance.footer.logo }}" alt="{{ site.brand.logoText }}" class="block h-6 w-auto max-w-40 object-contain">{{ else }}
-          <img src="{{ site.brand.logoMark }}" alt="" width="22" height="22" class="size-5.5 rounded-md">
+          {{# if site.brand.logoMark }}<img src="{{ site.brand.logoMark }}" alt="" width="22" height="22" class="size-5.5 rounded-md">{{/ if }}
           {{ site.brand.logoText }}{{/ if }}
         </a>
         <p>© {{ site.year }} {{# if nav.appearance.footer.copyright }}{{ nav.appearance.footer.copyright }}{{ else }}{{ site.name }}. All rights reserved.{{/ if }}</p>

@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { TemplateEngine, escapeHtml } from './lib/template.js';
-import { basePath, loadSite, paths, outputPathFor, pick, markActive, ROOT } from './lib/content.js';
+import { basePath, loadSite, paths, outputPathFor, pageScripts, pick, markActive, ROOT } from './lib/content.js';
 import { renderMarkdown, excerpt } from './lib/markdown.js';
 import { buildJsonLd } from './lib/schema.js';
 import { pageSeo, seoSettings } from './lib/seo.js';
@@ -240,6 +240,9 @@ function build() {
       ...context,
       main,
       jsonLd: buildJsonLd({ site, page: context.page, faqItems }),
+      // Only on the published site: a preview mustn't count as a visit or run other services' code.
+      customHead: includeDrafts ? '' : pageScripts(data.scripts, entry.url, 'head'),
+      customBody: includeDrafts ? '' : pageScripts(data.scripts, entry.url, 'body'),
     });
 
     const file = outputPathFor(entry.url);

@@ -13,7 +13,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, basePath, paths, loadSite, unclosedRawText } from './lib/content.js';
+import { ROOT, basePath, paths, loadSite, sameAddress, unclosedRawText } from './lib/content.js';
 import { auditPages } from './lib/seo.js';
 
 if (!fs.existsSync(paths.dist)) {
@@ -21,7 +21,7 @@ if (!fs.existsSync(paths.dist)) {
   process.exit(1);
 }
 
-const { all, site } = loadSite();
+const { all, site, data } = loadSite();
 const errors = [];
 const warnings = [];
 
@@ -44,6 +44,9 @@ const served = new Set();
       // A folder's index.html is served at the folder's address and at its own: imported pages
       // often link to /index.html, which GitHub Pages serves.
       if (item.name === 'index.html') served.add(`${prefix}/`);
+      // GitHub Pages serves about.html at /about too, so a link to /about (an imported page's or a
+      // copied header's, say) reaches it.
+      else if (item.name.endsWith('.html')) served.add(`${prefix}/${item.name.slice(0, -5)}`);
       served.add(`${prefix}/${item.name}`);
     }
   }
@@ -82,6 +85,18 @@ for (const entry of all) {
 
   const imagesWithoutAlt = [...html.matchAll(/<img (?![^>]*\balt=)[^>]*>/g)];
   if (imagesWithoutAlt.length) warnings.push(`${entry.url}: ${imagesWithoutAlt.length} image(s) without alt`);
+}
+
+/* Scripts that would break their pages, or are set to run on a page that's gone (content/data/scripts.json) */
+const published = new Set([...all.map((entry) => sameAddress(entry.url)), sameAddress('/404.html')]);
+for (const item of Array.isArray(data.scripts?.items) ? data.scripts.items : []) {
+  if (item?.on !== true) continue;
+  // On its own: in a built page, a later </script> would seem to close it, swallowing what's between.
+  const unclosed = unclosedRawText(item.code);
+  if (unclosed) errors.push(`content/data/scripts.json: "${item.name}" has ${unclosed} that's never closed, which hides part of every page it's on`);
+  for (const page of Array.isArray(item.pages) ? item.pages : []) {
+    if (!published.has(sameAddress(page))) warnings.push(`content/data/scripts.json: "${item.name}" is set to run on ${page}, which isn't a published page`);
+  }
 }
 
 /* SEO and content hygiene */
